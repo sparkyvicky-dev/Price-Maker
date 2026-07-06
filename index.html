@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Sparky Mobiles Price Manager - Offline price list management for mobile dealers">
+  <title>Sparky Mobiles Price Manager</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📱</text></svg>">
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <!-- Loading Overlay -->
+  <div id="loading-overlay" class="loading-overlay hidden" role="status" aria-live="polite" aria-label="Loading">
+    <div class="spinner" aria-hidden="true"></div>
+    <p id="loading-text">Loading...</p>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="toast-container" role="region" aria-live="polite" aria-label="Notifications"></div>
+
+  <!-- Network Status -->
+  <div id="network-status" class="network-status online" role="status" aria-live="polite">
+    <span class="network-dot" aria-hidden="true"></span>
+    <span id="network-label">Online</span>
+  </div>
+
+  <!-- Sticky Header -->
+  <header class="app-header" role="banner">
+    <div class="header-inner">
+      <div class="header-brand">
+        <img id="store-logo" class="store-logo hidden" src="" alt="Store logo">
+        <div class="header-titles">
+          <h1 id="header-store-name" class="editable-header" contenteditable="true" data-field="storeName" aria-label="Store name">Sparky Mobiles</h1>
+          <p id="header-location" class="editable-header subtitle" contenteditable="true" data-field="location" aria-label="Location">Kumbakonam</p>
+        </div>
+      </div>
+      <div class="header-meta">
+        <span id="header-date" class="editable-header" contenteditable="true" data-field="date" aria-label="Date"></span>
+        <span id="last-saved-time" class="last-saved" aria-label="Last saved time">Not saved yet</span>
+      </div>
+      <button id="menu-toggle" class="menu-toggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="main-nav">
+        <span aria-hidden="true">☰</span>
+      </button>
+    </div>
+    <nav id="main-nav" class="main-nav" role="navigation" aria-label="Main navigation">
+      <button class="nav-btn active" data-view="dashboard" aria-current="page">Dashboard</button>
+      <button class="nav-btn" data-view="history">History</button>
+      <button class="nav-btn" data-view="compare">Compare</button>
+      <button class="nav-btn" data-view="model-history">Model History</button>
+      <button class="nav-btn" data-view="calendar">Calendar</button>
+      <button class="nav-btn" data-view="settings">Settings</button>
+    </nav>
+  </header>
+
+  <main id="main-content" class="main-content" role="main">
+
+    <!-- Dashboard View -->
+    <section id="view-dashboard" class="view active" aria-labelledby="dashboard-title">
+      <div class="dashboard-top">
+        <div class="stats-grid" role="group" aria-label="Dashboard statistics">
+          <div class="stat-card">
+            <span class="stat-label">Total Brands</span>
+            <span id="stat-brands" class="stat-value">0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Total Models</span>
+            <span id="stat-models" class="stat-value">0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">History Count</span>
+            <span id="stat-history" class="stat-value">0</span>
+          </div>
+          <div class="stat-card changes-summary" id="changes-summary-card">
+            <span class="stat-label">Today's Changes</span>
+            <span id="stat-changes" class="stat-value">0</span>
+          </div>
+        </div>
+
+        <div class="action-bar" role="toolbar" aria-label="Dashboard actions">
+          <label class="btn btn-primary file-btn" tabindex="0">
+            <input type="file" id="upload-excel" accept=".xls,.xlsx" hidden aria-label="Upload Excel file">
+            📊 Upload Excel
+          </label>
+          <label class="btn btn-primary file-btn" tabindex="0">
+            <input type="file" id="upload-pdf" accept=".pdf" hidden aria-label="Upload PDF file">
+            📄 Upload PDF
+          </label>
+          <button id="btn-save-snapshot" class="btn btn-success" aria-label="Save today's snapshot">💾 Save Snapshot</button>
+          <button id="btn-export-pdf" class="btn btn-secondary" aria-label="Export as PDF">Export PDF</button>
+          <button id="btn-export-excel" class="btn btn-secondary" aria-label="Export as Excel">Export Excel</button>
+          <button id="btn-export-json" class="btn btn-secondary" aria-label="Export JSON backup">Export JSON</button>
+          <label class="btn btn-secondary file-btn" tabindex="0">
+            <input type="file" id="import-json" accept=".json" hidden aria-label="Import JSON backup">
+            Import JSON
+          </label>
+          <button id="btn-print" class="btn btn-secondary" aria-label="Print price list">🖨️ Print</button>
+          <button id="btn-duplicate-today" class="btn btn-secondary" aria-label="Duplicate today's list">Duplicate List</button>
+        </div>
+      </div>
+
+      <!-- Header Editor -->
+      <div class="editor-card" role="region" aria-labelledby="header-editor-title">
+        <h2 id="header-editor-title" class="card-title">Header Editor</h2>
+        <div class="editor-grid">
+          <label>Title <input type="text" id="edit-title" class="form-input" value="Price List" aria-label="List title"></label>
+          <label>Validity <input type="text" id="edit-validity" class="form-input" value="Valid For Today Only" aria-label="Validity text"></label>
+        </div>
+      </div>
+
+      <!-- Search & Filters -->
+      <div class="search-bar" role="search">
+        <input type="search" id="search-input" class="search-input" placeholder="Search brand, model, RAM, storage, price..." aria-label="Search products">
+        <div class="filter-chips" role="group" aria-label="Quick filters">
+          <button class="chip" data-filter="all" aria-pressed="true">All</button>
+          <button class="chip" data-filter="changed">Changed</button>
+          <button class="chip" data-filter="increased">Increased</button>
+          <button class="chip" data-filter="decreased">Decreased</button>
+          <button class="chip" data-filter="favorites">Favorites</button>
+        </div>
+        <button id="btn-bulk-edit" class="btn btn-secondary btn-sm" aria-label="Bulk edit prices">Bulk Edit</button>
+        <button id="btn-preview-selected" class="btn btn-secondary btn-sm" aria-label="Preview selected models">👁 Preview Selected</button>
+        <button id="btn-copy-selected" class="btn btn-success btn-sm" aria-label="Copy selected models">✓ Copy Selected</button>
+        <button id="btn-copy-full" class="btn btn-primary btn-sm" aria-label="Copy complete price list">Copy Complete Price List</button>
+      </div>
+
+      <!-- Recently Edited -->
+      <div id="recently-edited" class="recently-edited hidden" role="region" aria-label="Recently edited products">
+        <h3 class="section-subtitle">Recently Edited</h3>
+        <ul id="recent-list" class="recent-list"></ul>
+      </div>
+
+      <!-- Brand Cards Container -->
+      <div id="brand-cards" class="brand-cards" role="list" aria-label="Product brands"></div>
+      <div id="empty-state" class="empty-state">
+        <p>📱 No products yet. Upload an Excel or PDF file to get started.</p>
+      </div>
+
+      <!-- Footer Editor -->
+      <div class="editor-card" role="region" aria-labelledby="footer-editor-title">
+        <h2 id="footer-editor-title" class="card-title">Footer Editor</h2>
+        <div class="editor-grid footer-grid">
+          <label>Line 1 <input type="text" id="edit-footer-1" class="form-input" value="No DOA Support" aria-label="Footer line 1"></label>
+          <label>Line 2 <input type="text" id="edit-footer-2" class="form-input" value="Payment Always Prepaid" aria-label="Footer line 2"></label>
+          <label>Line 3 <input type="text" id="edit-footer-3" class="form-input" value="Call or WhatsApp for Orders" aria-label="Footer line 3"></label>
+        </div>
+      </div>
+    </section>
+
+    <!-- History View -->
+    <section id="view-history" class="view" aria-labelledby="history-title" hidden>
+      <h2 id="history-title" class="page-title">Price History</h2>
+      <div class="history-controls">
+        <input type="search" id="history-search" class="search-input" placeholder="Search history dates..." aria-label="Search history">
+      </div>
+      <div id="history-list" class="history-list" role="list" aria-label="Saved snapshots"></div>
+      <div id="history-pagination" class="pagination" role="navigation" aria-label="History pagination"></div>
+      <div id="snapshot-detail" class="snapshot-detail hidden" role="region" aria-label="Snapshot details"></div>
+    </section>
+
+    <!-- Compare View -->
+    <section id="view-compare" class="view" aria-labelledby="compare-title" hidden>
+      <h2 id="compare-title" class="page-title">Compare Dates</h2>
+      <div class="compare-selectors">
+        <label>Date A
+          <select id="compare-date-a" class="form-select" aria-label="First date to compare"></select>
+        </label>
+        <label>Date B
+          <select id="compare-date-b" class="form-select" aria-label="Second date to compare"></select>
+        </label>
+        <button id="btn-run-compare" class="btn btn-primary">Compare</button>
+      </div>
+      <div id="compare-results" class="compare-results" role="region" aria-label="Comparison results"></div>
+    </section>
+
+    <!-- Model History View -->
+    <section id="view-model-history" class="view" aria-labelledby="model-history-title" hidden>
+      <h2 id="model-history-title" class="page-title">Model History</h2>
+      <div class="model-search-bar">
+        <input type="search" id="model-search-input" class="search-input" placeholder="Search model e.g. T4 Lite..." aria-label="Search model history">
+        <button id="btn-model-search" class="btn btn-primary">Search</button>
+      </div>
+      <div id="model-history-results" class="model-history-results" role="region" aria-label="Model price history"></div>
+    </section>
+
+    <!-- Calendar View -->
+    <section id="view-calendar" class="view" aria-labelledby="calendar-title" hidden>
+      <h2 id="calendar-title" class="page-title">Calendar</h2>
+      <div class="calendar-nav">
+        <button id="cal-prev" class="btn btn-secondary btn-sm" aria-label="Previous month">◀</button>
+        <span id="cal-month-year" class="cal-month-year" aria-live="polite"></span>
+        <button id="cal-next" class="btn btn-secondary btn-sm" aria-label="Next month">▶</button>
+      </div>
+      <div id="calendar-grid" class="calendar-grid" role="grid" aria-label="Calendar"></div>
+      <div id="calendar-snapshot" class="snapshot-detail hidden" role="region" aria-label="Selected day snapshot"></div>
+    </section>
+
+    <!-- Settings View -->
+    <section id="view-settings" class="view" aria-labelledby="settings-title" hidden>
+      <h2 id="settings-title" class="page-title">Settings</h2>
+      <form id="settings-form" class="settings-form">
+        <fieldset>
+          <legend>Appearance</legend>
+          <label>Theme
+            <select id="setting-theme" class="form-select" aria-label="Theme selection">
+              <option value="dark">Dark</option>
+              <option value="light">Light</option>
+              <option value="auto">Auto</option>
+            </select>
+          </label>
+        </fieldset>
+        <fieldset>
+          <legend>Display</legend>
+          <label>Currency Symbol
+            <select id="setting-currency" class="form-select" aria-label="Currency symbol">
+              <option value="Rs">Rs</option>
+              <option value="₹">₹</option>
+            </select>
+          </label>
+          <label>Date Format
+            <select id="setting-date-format" class="form-select" aria-label="Date format">
+              <option value="dd/mm/yyyy">dd/mm/yyyy</option>
+            </select>
+          </label>
+        </fieldset>
+        <fieldset>
+          <legend>Store Info</legend>
+          <label>Store Name <input type="text" id="setting-store-name" class="form-input" aria-label="Store name"></label>
+          <label>Location <input type="text" id="setting-location" class="form-input" aria-label="Location"></label>
+          <label>Store Logo <input type="file" id="setting-logo" accept="image/*" class="form-input" aria-label="Store logo upload"></label>
+          <img id="setting-logo-preview" class="logo-preview hidden" src="" alt="Logo preview">
+        </fieldset>
+        <fieldset>
+          <legend>WhatsApp</legend>
+          <label>Dealer Phone (optional) <input type="tel" id="setting-whatsapp" class="form-input" placeholder="+91..." aria-label="WhatsApp phone number"></label>
+        </fieldset>
+        <fieldset>
+          <legend>Price Alerts</legend>
+          <label>Alert threshold (₹) <input type="number" id="setting-alert-threshold" class="form-input" min="0" placeholder="e.g. 10000" aria-label="Price alert threshold"></label>
+        </fieldset>
+        <fieldset>
+          <legend>Favorite Brands</legend>
+          <div id="favorite-brands-list" class="favorite-brands" role="group" aria-label="Favorite brands"></div>
+        </fieldset>
+        <div class="settings-actions">
+          <button type="submit" class="btn btn-primary">Save Settings</button>
+          <button type="button" id="btn-reset-data" class="btn btn-danger">Reset All Data</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <!-- Floating Save Button -->
+  <button id="fab-save" class="fab" aria-label="Quick save snapshot" title="Save Snapshot (Ctrl+S)">💾</button>
+
+  <!-- Preview Modal -->
+  <dialog id="preview-modal" class="modal" aria-labelledby="preview-modal-title">
+    <div class="modal-header">
+      <h2 id="preview-modal-title">WhatsApp Preview</h2>
+      <button class="modal-close" data-close-modal aria-label="Close preview">&times;</button>
+    </div>
+    <pre id="preview-content" class="preview-content" aria-label="Message preview"></pre>
+    <div class="modal-actions">
+      <button id="btn-preview-copy" class="btn btn-primary">Copy to Clipboard</button>
+      <a id="btn-whatsapp-link" class="btn btn-success" href="#" target="_blank" rel="noopener">Open WhatsApp</a>
+    </div>
+  </dialog>
+
+  <!-- Bulk Edit Modal -->
+  <dialog id="bulk-edit-modal" class="modal" aria-labelledby="bulk-edit-title">
+    <div class="modal-header">
+      <h2 id="bulk-edit-title">Bulk Price Edit</h2>
+      <button class="modal-close" data-close-modal aria-label="Close bulk edit">&times;</button>
+    </div>
+    <form id="bulk-edit-form" class="bulk-edit-form">
+      <label>Brand (optional)
+        <select id="bulk-brand" class="form-select"><option value="">All Brands</option></select>
+      </label>
+      <label>Adjustment
+        <select id="bulk-type" class="form-select">
+          <option value="percent-increase">Percentage Increase</option>
+          <option value="percent-decrease">Percentage Decrease</option>
+          <option value="fixed-increase">Fixed Increase (₹)</option>
+          <option value="fixed-decrease">Fixed Decrease (₹)</option>
+        </select>
+      </label>
+      <label>Value <input type="number" id="bulk-value" class="form-input" min="0" step="0.01" required></label>
+      <button type="submit" class="btn btn-primary">Apply</button>
+    </form>
+  </dialog>
+
+  <!-- Keyboard Shortcuts Help -->
+  <dialog id="shortcuts-modal" class="modal" aria-labelledby="shortcuts-title">
+    <div class="modal-header">
+      <h2 id="shortcuts-title">Keyboard Shortcuts</h2>
+      <button class="modal-close" data-close-modal aria-label="Close shortcuts">&times;</button>
+    </div>
+    <dl class="shortcuts-list">
+      <dt>Ctrl+S</dt><dd>Save snapshot</dd>
+      <dt>Ctrl+Z</dt><dd>Undo last edit</dd>
+      <dt>Ctrl+F</dt><dd>Focus search</dd>
+      <dt>Ctrl+Shift+C</dt><dd>Copy selected models</dd>
+      <dt>Ctrl+Shift+P</dt><dd>Preview selected models</dd>
+      <dt>Ctrl+K</dt><dd>Copy full list</dd>
+      <dt>?</dt><dd>Show shortcuts</dd>
+      <dt>Esc</dt><dd>Close modal</dd>
+    </dl>
+  </dialog>
+
+  <!-- External Libraries -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    if (typeof pdfjsLib !== 'undefined') {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+  </script>
+
+  <!-- Application Scripts -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
