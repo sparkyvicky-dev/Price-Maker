@@ -2,17 +2,15 @@
 title Price Maker
 setlocal
 
-rem === Change this if your project folder is somewhere else ===
-set "APP_DIR=%USERPROFILE%\Desktop\price-maker"
+rem Auto-detect project folder when this file lives inside the repo.
+set "APP_DIR=%~dp0"
+set "APP_DIR=%APP_DIR:~0,-1%"
 set "PORT=8080"
 
 if not exist "%APP_DIR%\index.html" (
     echo.
-    echo  Price Maker was not found at:
-    echo  %APP_DIR%
-    echo.
-    echo  Put the price-maker folder on your Desktop, or edit APP_DIR
-    echo  at the top of this file to point to your project folder.
+    echo  Desktop launcher not set up yet.
+    echo  Run setup.bat once from your project folder.
     echo.
     pause
     exit /b 1
