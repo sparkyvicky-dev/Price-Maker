@@ -103,10 +103,11 @@ const app = {
     });
 
     document.getElementById('menu-toggle')?.addEventListener('click', () => {
-      const nav = document.getElementById('main-nav');
-      const toggle = document.getElementById('menu-toggle');
-      const open = nav.classList.toggle('open');
-      toggle.setAttribute('aria-expanded', String(open));
+      this.toggleSidebar();
+    });
+
+    document.getElementById('sidebar-overlay')?.addEventListener('click', () => {
+      this.closeSidebar();
     });
 
     ['edit-title', 'edit-validity', 'edit-footer-1', 'edit-footer-2', 'edit-footer-3'].forEach(id => {
@@ -598,6 +599,27 @@ const app = {
     showLoading(false);
   },
 
+  toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    const toggle = document.getElementById('menu-toggle');
+    const open = !sidebar?.classList.contains('open');
+    sidebar?.classList.toggle('open', open);
+    overlay?.classList.toggle('open', open);
+    if (overlay) overlay.hidden = !open;
+    toggle?.setAttribute('aria-expanded', String(open));
+  },
+
+  closeSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    const toggle = document.getElementById('menu-toggle');
+    sidebar?.classList.remove('open');
+    overlay?.classList.remove('open');
+    if (overlay) overlay.hidden = true;
+    toggle?.setAttribute('aria-expanded', 'false');
+  },
+
   async switchView(view) {
     document.querySelectorAll('.view').forEach(v => {
       v.classList.remove('active');
@@ -616,7 +638,7 @@ const app = {
       btn.setAttribute('aria-current', active ? 'page' : 'false');
     });
 
-    document.getElementById('main-nav')?.classList.remove('open');
+    this.closeSidebar();
 
     if (view === 'history') await renderHistoryList();
     if (view === 'compare') await populateCompareDates();

@@ -26,35 +26,60 @@
     <span id="network-label">Online</span>
   </div>
 
-  <!-- Sticky Header -->
-  <header class="app-header" role="banner">
-    <div class="header-inner">
-      <div class="header-brand">
+  <div class="app-shell">
+    <!-- Left Sidebar -->
+    <aside id="sidebar" class="sidebar" role="navigation" aria-label="Main navigation">
+      <div class="sidebar-brand">
         <img id="store-logo" class="store-logo hidden" src="" alt="Store logo">
-        <div class="header-titles">
-          <h1 id="header-store-name" class="editable-header" contenteditable="true" data-field="storeName" aria-label="Store name">Sparky Mobiles</h1>
-          <p id="header-location" class="editable-header subtitle" contenteditable="true" data-field="location" aria-label="Location">Kumbakonam</p>
+        <div class="sidebar-titles">
+          <h1 id="header-store-name" class="editable-header sidebar-store-name" contenteditable="true" data-field="storeName" aria-label="Store name">Sparky Mobiles</h1>
+          <p id="header-location" class="editable-header sidebar-location" contenteditable="true" data-field="location" aria-label="Location">Kumbakonam</p>
         </div>
       </div>
-      <div class="header-meta">
-        <span id="header-date" class="editable-header" contenteditable="true" data-field="date" aria-label="Date"></span>
+
+      <nav id="main-nav" class="sidebar-nav">
+        <button class="nav-btn active" data-view="dashboard" aria-current="page">
+          <span class="nav-icon" aria-hidden="true">📊</span>
+          <span class="nav-label">Dashboard</span>
+        </button>
+        <button class="nav-btn" data-view="history">
+          <span class="nav-icon" aria-hidden="true">📋</span>
+          <span class="nav-label">History</span>
+        </button>
+        <button class="nav-btn" data-view="compare">
+          <span class="nav-icon" aria-hidden="true">⚖️</span>
+          <span class="nav-label">Compare</span>
+        </button>
+        <button class="nav-btn" data-view="model-history">
+          <span class="nav-icon" aria-hidden="true">📈</span>
+          <span class="nav-label">Model History</span>
+        </button>
+        <button class="nav-btn" data-view="calendar">
+          <span class="nav-icon" aria-hidden="true">📅</span>
+          <span class="nav-label">Calendar</span>
+        </button>
+        <button class="nav-btn" data-view="settings">
+          <span class="nav-icon" aria-hidden="true">⚙️</span>
+          <span class="nav-label">Settings</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <span id="header-date" class="editable-header sidebar-date" contenteditable="true" data-field="date" aria-label="Date"></span>
         <span id="last-saved-time" class="last-saved" aria-label="Last saved time">Not saved yet</span>
       </div>
-      <button id="menu-toggle" class="menu-toggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="main-nav">
-        <span aria-hidden="true">☰</span>
-      </button>
-    </div>
-    <nav id="main-nav" class="main-nav" role="navigation" aria-label="Main navigation">
-      <button class="nav-btn active" data-view="dashboard" aria-current="page">Dashboard</button>
-      <button class="nav-btn" data-view="history">History</button>
-      <button class="nav-btn" data-view="compare">Compare</button>
-      <button class="nav-btn" data-view="model-history">Model History</button>
-      <button class="nav-btn" data-view="calendar">Calendar</button>
-      <button class="nav-btn" data-view="settings">Settings</button>
-    </nav>
-  </header>
+    </aside>
 
-  <main id="main-content" class="main-content" role="main">
+    <div id="sidebar-overlay" class="sidebar-overlay" hidden aria-hidden="true"></div>
+
+    <div class="app-main">
+      <header class="top-bar" role="banner">
+        <button id="menu-toggle" class="menu-toggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="sidebar">
+          <span aria-hidden="true">☰</span>
+        </button>
+      </header>
+
+      <main id="main-content" class="main-content" role="main">
 
     <!-- Dashboard View -->
     <section id="view-dashboard" class="view active" aria-labelledby="dashboard-title">
@@ -149,8 +174,7 @@
     </section>
 
     <!-- History View -->
-    <section id="view-history" class="view" aria-labelledby="history-title" hidden>
-      <h2 id="history-title" class="page-title">Price History</h2>
+    <section id="view-history" class="view" aria-label="Price History" hidden>
       <div class="history-controls">
         <input type="search" id="history-search" class="search-input" placeholder="Search history dates..." aria-label="Search history">
       </div>
@@ -160,8 +184,7 @@
     </section>
 
     <!-- Compare View -->
-    <section id="view-compare" class="view" aria-labelledby="compare-title" hidden>
-      <h2 id="compare-title" class="page-title">Compare Dates</h2>
+    <section id="view-compare" class="view" aria-label="Compare Dates" hidden>
       <div class="compare-selectors">
         <label>Date A
           <select id="compare-date-a" class="form-select" aria-label="First date to compare"></select>
@@ -175,8 +198,7 @@
     </section>
 
     <!-- Model History View -->
-    <section id="view-model-history" class="view" aria-labelledby="model-history-title" hidden>
-      <h2 id="model-history-title" class="page-title">Model History</h2>
+    <section id="view-model-history" class="view" aria-label="Model History" hidden>
       <div class="model-search-bar">
         <input type="search" id="model-search-input" class="search-input" placeholder="Search model e.g. T4 Lite..." aria-label="Search model history">
         <button id="btn-model-search" class="btn btn-primary">Search</button>
@@ -185,8 +207,7 @@
     </section>
 
     <!-- Calendar View -->
-    <section id="view-calendar" class="view" aria-labelledby="calendar-title" hidden>
-      <h2 id="calendar-title" class="page-title">Calendar</h2>
+    <section id="view-calendar" class="view" aria-label="Calendar" hidden>
       <div class="calendar-nav">
         <button id="cal-prev" class="btn btn-secondary btn-sm" aria-label="Previous month">◀</button>
         <span id="cal-month-year" class="cal-month-year" aria-live="polite"></span>
@@ -197,8 +218,7 @@
     </section>
 
     <!-- Settings View -->
-    <section id="view-settings" class="view" aria-labelledby="settings-title" hidden>
-      <h2 id="settings-title" class="page-title">Settings</h2>
+    <section id="view-settings" class="view" aria-label="Settings" hidden>
       <form id="settings-form" class="settings-form">
         <fieldset>
           <legend>Appearance</legend>
@@ -249,7 +269,9 @@
         </div>
       </form>
     </section>
-  </main>
+      </main>
+    </div>
+  </div>
 
   <!-- Floating Save Button -->
   <button id="fab-save" class="fab" aria-label="Quick save snapshot" title="Save Snapshot (Ctrl+S)">💾</button>
