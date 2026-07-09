@@ -42,6 +42,25 @@ let searchQuery = '';
 let autosaveTimer = null;
 let calendarMonth = new Date().getMonth();
 let calendarYear = new Date().getFullYear();
+let activePriceEditor = null;
+
+const UNDO_STORAGE_KEY = 'sparky_price_undo';
+const PRICE_PERSIST_DELAY_MS = 300;
+
+function persistUndoStack() {
+  try {
+    sessionStorage.setItem(UNDO_STORAGE_KEY, JSON.stringify(undoStack));
+  } catch { /* quota / private mode */ }
+}
+
+function loadUndoStack() {
+  try {
+    const raw = sessionStorage.getItem(UNDO_STORAGE_KEY);
+    undoStack = raw ? JSON.parse(raw) : [];
+  } catch {
+    undoStack = [];
+  }
+}
 
 const app = {
   async init() {
@@ -56,6 +75,8 @@ const app = {
         applyYesterdayPrices(yesterday.products || []);
       }
 
+      loadUndoStack();
+
       syncHeaderFooterToUI();
       this.bindEvents();
       initTemplateControls((type, message) => {
@@ -64,6 +85,7 @@ const app = {
       this.initNetworkStatus();
       this.initKeyboardShortcuts();
       this.startAutosave();
+      this.bindPageLifecycle();
       await this.refreshDashboard();
       populateSettingsForm();
       showLoading(false);
@@ -262,12 +284,39 @@ const app = {
   pushPriceUndoSnapshot(snapshot) {
     undoStack = undoStack.filter(entry => entry.kind !== 'prices');
     undoStack.push({ batch: true, items: snapshot, kind: 'prices' });
+    persistUndoStack();
     this.updatePriceActionUI();
   },
 
   pushSinglePriceUndo(entry) {
     undoStack.push({ ...entry, kind: 'prices' });
+    persistUndoStack();
     this.updatePriceActionUI();
+  },
+
+  flushActivePriceEditor({ awaitDb = false } = {}) {
+    const editor = activePriceEditor;
+    if (!editor?.input?.isConnected) return Promise.resolve(false);
+
+    if (editor.clearPersistTimer) editor.clearPersistTimer();
+
+    const newPrice = parsePrice(editor.input.value);
+    if (newPrice < 0) return Promise.resolve(false);
+
+    editor.product.price = newPrice;
+    editor.product.updatedAt = Date.now();
+    activePriceEditor = null;
+
+    const write = updateProduct(editor.product);
+    if (awaitDb) return write.then(() => true);
+    write.catch(err => console.error('Price save failed:', err));
+    return Promise.resolve(true);
+  },
+
+  bindPageLifecycle() {
+    window.addEventListener('pagehide', () => {
+      this.flushActivePriceEditor();
+    });
   },
 
   getPriceEditTargets() {
@@ -360,6 +409,8 @@ const app = {
   },
 
   renderBrandCards() {
+    this.flushActivePriceEditor();
+
     const container = document.getElementById('brand-cards');
     const empty = document.getElementById('empty-state');
     if (!container) return;
@@ -1037,10 +1088,13 @@ const app = {
   },
 
   startPriceEdit(btn) {
+    this.flushActivePriceEditor();
+
     const id = btn.dataset.priceId;
     const product = products.find(p => p.id === id);
     if (!product) return;
 
+    const priceAtEditStart = product.price;
     const input = document.createElement('input');
     input.type = 'number';
     input.className = 'price-input';
@@ -1048,24 +1102,89 @@ const app = {
     input.min = 0;
     input.setAttribute('aria-label', 'Edit price');
 
-    const save = async () => {
-      const newPrice = parsePrice(input.value);
-      if (newPrice >= 0 && newPrice !== product.price) {
-        this.pushSinglePriceUndo({ id, oldPrice: product.price });
-        if (product.previousPrice == null) product.previousPrice = product.price;
-        product.price = newPrice;
-        product.updatedAt = Date.now();
-        await updateProduct(product);
-        this.addRecentlyEdited(product);
-        await this.refreshDashboard();
-        showToast(newPrice === 0 ? 'Price cleared' : 'Price updated', 'success');
-        if (newPrice > 0) this.checkPriceAlert(product);
-      } else {
-        btn.textContent = this.formatPriceLabel(product.price, loadSettings().currency);
+    let cancelled = false;
+    let finishing = false;
+    let persistTimer = null;
+
+    const clearPersistTimer = () => {
+      if (persistTimer) {
+        clearTimeout(persistTimer);
+        persistTimer = null;
       }
     };
 
-    input.addEventListener('blur', save);
+    const persistToDb = async () => {
+      product.updatedAt = Date.now();
+      await updateProduct(product);
+    };
+
+    const schedulePersist = () => {
+      clearPersistTimer();
+      persistTimer = setTimeout(() => {
+        persistTimer = null;
+        persistToDb().catch(err => {
+          console.error('Price save failed:', err);
+          showToast('Failed to save price', 'error');
+        });
+      }, PRICE_PERSIST_DELAY_MS);
+    };
+
+    const applyInputPrice = () => {
+      const newPrice = parsePrice(input.value);
+      if (newPrice < 0) return null;
+      if (product.previousPrice == null && priceAtEditStart > 0 && newPrice !== priceAtEditStart) {
+        product.previousPrice = priceAtEditStart;
+      }
+      product.price = newPrice;
+      return newPrice;
+    };
+
+    const finishEdit = async () => {
+      if (cancelled || finishing || !input.isConnected) return;
+      finishing = true;
+      activePriceEditor = null;
+
+      if (persistTimer) {
+        clearPersistTimer();
+      }
+
+      const newPrice = applyInputPrice();
+      if (newPrice == null) {
+        finishing = false;
+        return;
+      }
+
+      try {
+        await persistToDb();
+
+        if (newPrice !== priceAtEditStart) {
+          this.pushSinglePriceUndo({ id, oldPrice: priceAtEditStart });
+          this.addRecentlyEdited(product);
+          showToast(newPrice === 0 ? 'Price cleared' : 'Price updated', 'success');
+          if (newPrice > 0) this.checkPriceAlert(product);
+        }
+
+        await this.refreshDashboard();
+      } catch (err) {
+        finishing = false;
+        showToast('Failed to save price: ' + err.message, 'error');
+        if (input.isConnected) {
+          input.replaceWith(btn);
+          btn.textContent = this.formatPriceLabel(product.price, loadSettings().currency);
+        }
+      }
+    };
+
+    activePriceEditor = { input, product, clearPersistTimer, finishEdit };
+
+    input.addEventListener('input', () => {
+      if (applyInputPrice() != null) schedulePersist();
+    });
+
+    input.addEventListener('blur', () => {
+      if (!cancelled) finishEdit();
+    });
+
     input.addEventListener('mousedown', (e) => e.stopPropagation());
     input.addEventListener('dragstart', (e) => e.preventDefault());
     input.addEventListener('keydown', (e) => {
@@ -1073,8 +1192,13 @@ const app = {
       if (e.key === 'Escape') {
         e.preventDefault();
         e.stopPropagation();
-        input.value = product.price;
-        input.blur();
+        cancelled = true;
+        activePriceEditor = null;
+        clearPersistTimer();
+        product.price = priceAtEditStart;
+        updateProduct(product).catch(err => console.error('Price revert failed:', err));
+        input.replaceWith(btn);
+        btn.textContent = this.formatPriceLabel(priceAtEditStart, loadSettings().currency);
       }
     });
 
@@ -1451,6 +1575,7 @@ const app = {
 
   async undoLastEdit() {
     const last = undoStack.pop();
+    persistUndoStack();
     if (!last) {
       showToast('Nothing to undo', 'info');
       this.updatePriceActionUI();
@@ -1539,6 +1664,7 @@ const app = {
     products = [];
     recentlyEdited = [];
     undoStack = [];
+    try { sessionStorage.removeItem(UNDO_STORAGE_KEY); } catch { /* ignore */ }
     localStorage.removeItem('sparky_settings');
     location.reload();
   },
@@ -1547,6 +1673,7 @@ const app = {
     if (autosaveTimer) clearInterval(autosaveTimer);
     autosaveTimer = setInterval(async () => {
       if (!loadSettings().autosaveEnabled || !products.length) return;
+      await this.flushActivePriceEditor({ awaitDb: true });
       saveHeaderFooterFromUI();
       await saveAllProducts(products);
       await setMeta('lastSaved', Date.now());
