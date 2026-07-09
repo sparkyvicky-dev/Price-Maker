@@ -98,6 +98,12 @@ export async function updateProduct(product) {
   });
 }
 
+export async function deleteProduct(id) {
+  return tx('products', 'readwrite', ({ products }) => {
+    products.delete(id);
+  });
+}
+
 export async function clearProducts() {
   return tx('products', 'readwrite', ({ products }) => {
     products.clear();

@@ -73,6 +73,9 @@ const DEFAULT_SETTINGS = {
   titleTemplates: [...DEFAULT_TITLE_TEMPLATES],
   validityTemplates: [...DEFAULT_VALIDITY_TEMPLATES],
   footerTemplates: DEFAULT_FOOTER_TEMPLATES.map(t => ({ ...t })),
+  customSections: [],
+  sectionOrder: [],
+  collapsedSections: {},
   collapsedBrands: {},
   autosaveEnabled: true
 };
@@ -118,6 +121,9 @@ function normalizeSettings(raw) {
     DEFAULT_FOOTER_TEMPLATES.map(t => ({ ...t })),
     raw?.footerTemplates
   );
+  settings.customSections = Array.isArray(raw?.customSections) ? raw.customSections : [];
+  settings.sectionOrder = Array.isArray(raw?.sectionOrder) ? raw.sectionOrder : [];
+  settings.collapsedSections = raw?.collapsedSections || {};
   return settings;
 }
 
@@ -412,6 +418,55 @@ export function saveHeaderFooterFromUI() {
     }
   });
   populateTemplateDropdowns();
+}
+
+export function addCustomSection(title = 'New Heading') {
+  const s = loadSettings();
+  const section = {
+    id: `sec-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    title: String(title || 'New Heading').trim() || 'New Heading'
+  };
+  const customSections = [...s.customSections, section];
+  const sectionOrder = [...s.sectionOrder, section.id];
+  saveSettings({ customSections, sectionOrder });
+  return section;
+}
+
+export function updateCustomSectionTitle(id, title) {
+  const trimmed = String(title || '').trim();
+  if (!trimmed) return false;
+  const s = loadSettings();
+  const customSections = s.customSections.map(sec =>
+    sec.id === id ? { ...sec, title: trimmed } : sec
+  );
+  saveSettings({ customSections });
+  return true;
+}
+
+export function deleteCustomSection(id) {
+  const s = loadSettings();
+  saveSettings({
+    customSections: s.customSections.filter(sec => sec.id !== id),
+    sectionOrder: s.sectionOrder.filter(secId => secId !== id),
+    collapsedSections: Object.fromEntries(
+      Object.entries(s.collapsedSections || {}).filter(([key]) => key !== id)
+    )
+  });
+}
+
+export function updateSectionOrder(order) {
+  saveSettings({ sectionOrder: order });
+}
+
+export function toggleSectionCollapsed(id) {
+  const collapsed = { ...loadSettings().collapsedSections };
+  collapsed[id] = !collapsed[id];
+  saveSettings({ collapsedSections: collapsed });
+  return collapsed[id];
+}
+
+export function getCustomSection(id) {
+  return loadSettings().customSections.find(sec => sec.id === id) || null;
 }
 
 export { DEFAULT_SETTINGS };

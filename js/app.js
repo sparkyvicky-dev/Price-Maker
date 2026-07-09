@@ -3,12 +3,12 @@
  */
 
 import {
-  debounce, generateId, groupByBrand, sortProducts, productDisplayName,
+  debounce, generateId, groupByBrand, groupProductsForDisplay, sortProducts, productDisplayName,
   formatPrice, parsePrice, parseProductDisplayEdit, showToast, showLoading, escapeHtml, getVisibleSlice, todayKey, hasProductPrice
 } from './utils.js';
 
 import {
-  openDB, getAllProducts, saveAllProducts, updateProduct, saveSnapshot,
+  openDB, getAllProducts, saveAllProducts, updateProduct, deleteProduct, saveSnapshot,
   getHistoryCount, setMeta, getMeta, getYesterdaySnapshot, getSnapshotsByDate,
   getAllSnapshots, resetDatabase
 } from './db.js';
@@ -17,7 +17,8 @@ import {
   loadSettings, saveSettings, initTheme, syncHeaderFooterToUI,
   saveHeaderFooterFromUI, toggleFavoriteBrand, updateBrandOrder,
   toggleBrandCollapsed, populateSettingsForm, readSettingsForm, applyTheme, getTodayFormatted,
-  initTemplateControls
+  initTemplateControls, addCustomSection, updateCustomSectionTitle, deleteCustomSection,
+  toggleSectionCollapsed
 } from './settings.js';
 
 import { parseExcelFile } from './excel.js';
@@ -124,6 +125,14 @@ const app = {
       el.addEventListener('blur', () => saveHeaderFooterFromUI());
     });
 
+    document.getElementById('btn-add-heading')?.addEventListener('click', () => this.createCustomHeading());
+    document.getElementById('btn-add-product')?.addEventListener('click', () => this.openAddProductModal());
+    document.getElementById('move-to-section')?.addEventListener('change', (e) => this.moveSelectedToSection(e.target.value));
+    document.getElementById('add-product-form')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.submitAddProductForm();
+    });
+
     document.getElementById('btn-select-all')?.addEventListener('click', () => this.toggleSelectAll());
     document.getElementById('btn-clear-prices')?.addEventListener('click', () => this.clearPrices());
     document.getElementById('btn-undo-price')?.addEventListener('click', () => this.undoLastEdit());
@@ -187,6 +196,7 @@ const app = {
     this.populateBulkBrands();
     this.updateSelectionUI();
     this.updatePriceActionUI();
+    this.populateMoveToSectionDropdown();
   },
 
   updateSelectionUI() {
@@ -211,6 +221,19 @@ const app = {
       selectAllBtn.setAttribute('aria-label', allSelected ? 'Deselect all visible models' : 'Select all visible models');
       selectAllBtn.disabled = filtered.length === 0;
     }
+
+    this.populateMoveToSectionDropdown();
+  },
+
+  populateMoveToSectionDropdown() {
+    const select = document.getElementById('move-to-section');
+    if (!select) return;
+    const s = loadSettings();
+    const count = selectedProducts.size;
+    select.innerHTML = `<option value="">${count ? `Move Selected (${count}) to…` : 'Move Selected to…'}</option>` +
+      `<option value="__brand__">Back to Brand Groups</option>` +
+      s.customSections.map(sec => `<option value="${escapeHtml(sec.id)}">${escapeHtml(sec.title)}</option>`).join('');
+    select.disabled = count === 0;
   },
 
   deselectAll() {
@@ -345,51 +368,89 @@ const app = {
     const filtered = this.getFilteredProducts();
     const s = loadSettings();
 
-    if (!filtered.length) {
+    if (!products.length) {
       container.innerHTML = '';
-      empty?.classList.toggle('hidden', products.length > 0);
-      if (products.length > 0 && searchQuery) {
-        empty.classList.remove('hidden');
-        empty.querySelector('p').textContent = 'No products match your search.';
-      }
+      empty?.classList.remove('hidden');
+      if (empty) empty.querySelector('p').textContent = '📱 No products yet. Upload an Excel or PDF file to get started.';
+      this.populateMoveToSectionDropdown();
+      return;
+    }
+
+    const groups = groupProductsForDisplay(filtered, s);
+    const hasVisibleGroups = groups.some(g => g.products.length > 0 || g.isCustom);
+
+    if (!hasVisibleGroups) {
+      container.innerHTML = '';
+      empty?.classList.remove('hidden');
+      if (empty) empty.querySelector('p').textContent = 'No products match your search.';
+      this.populateMoveToSectionDropdown();
       return;
     }
 
     empty?.classList.add('hidden');
-    const groups = groupByBrand(filtered, s.brandOrder);
 
-    container.innerHTML = groups.map(({ brand, products: brandProducts }) => {
-      const collapsed = s.collapsedBrands[brand];
-      const isFavorite = s.favoriteBrands.includes(brand);
-      const sorted = sortProducts(brandProducts);
-      const useVirtual = sorted.length > VIRTUAL_THRESHOLD;
-
-      return `
-        <div class="brand-card ${collapsed ? 'collapsed' : ''}" data-brand="${escapeHtml(brand)}" role="listitem">
-          <div class="brand-card-header">
-            <div class="brand-title-row">
-              <span class="drag-handle" draggable="true" title="Drag to reorder brand" aria-label="Drag to reorder ${escapeHtml(brand)}">⠿</span>
-              <h3 class="brand-name">${escapeHtml(brand)}</h3>
-              <span class="brand-count">${sorted.length}</span>
-              <button class="btn-icon favorite-btn ${isFavorite ? 'active' : ''}" data-fav="${escapeHtml(brand)}" aria-label="${isFavorite ? 'Remove from favorites' : 'Add to favorites'}" title="Favorite">★</button>
-            </div>
-            <div class="brand-actions">
-              <button class="btn btn-sm btn-secondary btn-select-brand" data-select-brand="${escapeHtml(brand)}" aria-label="Select all ${escapeHtml(brand)}">Select All</button>
-              <button class="btn btn-sm btn-secondary" data-preview="${escapeHtml(brand)}" aria-label="Preview ${escapeHtml(brand)}">Preview</button>
-              <button class="btn btn-sm btn-primary" data-copy="${escapeHtml(brand)}" aria-label="Copy ${escapeHtml(brand)}">Copy ${escapeHtml(brand)}</button>
-              <button class="btn btn-sm btn-secondary collapse-btn" data-collapse="${escapeHtml(brand)}" aria-label="${collapsed ? 'Expand' : 'Collapse'} ${escapeHtml(brand)}">${collapsed ? 'Expand' : 'Collapse'}</button>
-            </div>
-          </div>
-          <div class="brand-products ${useVirtual ? 'virtual-scroll' : ''}" data-brand-products="${escapeHtml(brand)}" ${useVirtual ? `style="max-height:400px;overflow-y:auto"` : ''}>
-            ${useVirtual ? this.renderVirtualProductList(sorted, brand) : this.renderProductList(sorted)}
-          </div>
-        </div>
-      `;
-    }).join('');
+    container.innerHTML = groups.map(group => this.renderGroupCard(group, s)).join('');
 
     this.bindBrandCardEvents(container);
     this.initDragReorder(container);
     this.updateSelectionUI();
+  },
+
+  renderGroupCard(group, s) {
+    const sorted = sortProducts(group.products);
+    const useVirtual = sorted.length > VIRTUAL_THRESHOLD;
+    const collapsed = group.collapsed;
+    const count = sorted.length;
+
+    if (group.isCustom) {
+      return `
+        <div class="brand-card custom-section-card ${collapsed ? 'collapsed' : ''}" data-section-id="${escapeHtml(group.sectionId)}" role="listitem">
+          <div class="brand-card-header">
+            <div class="brand-title-row">
+              <h3 class="section-name" data-section-title="${escapeHtml(group.sectionId)}" title="Double-click to rename heading">${escapeHtml(group.title)}</h3>
+              <span class="brand-count">${count}</span>
+              <button class="btn-icon btn-delete-section" data-delete-section="${escapeHtml(group.sectionId)}" aria-label="Delete heading ${escapeHtml(group.title)}" title="Delete heading">🗑</button>
+            </div>
+            <div class="brand-actions">
+              <button class="btn btn-sm btn-secondary btn-select-group" data-group-key="${escapeHtml(group.sectionId)}" data-group-type="section" aria-label="Select all in ${escapeHtml(group.title)}">Select All</button>
+              <button class="btn btn-sm btn-secondary btn-add-to-section" data-section-id="${escapeHtml(group.sectionId)}" aria-label="Add selected to ${escapeHtml(group.title)}">Add Selected</button>
+              <button class="btn btn-sm btn-secondary btn-add-product-inline" data-section-id="${escapeHtml(group.sectionId)}" aria-label="Add product to ${escapeHtml(group.title)}">+ Product</button>
+              <button class="btn btn-sm btn-secondary" data-preview-section="${escapeHtml(group.sectionId)}" aria-label="Preview ${escapeHtml(group.title)}">Preview</button>
+              <button class="btn btn-sm btn-primary" data-copy-section="${escapeHtml(group.sectionId)}" aria-label="Copy ${escapeHtml(group.title)}">Copy</button>
+              <button class="btn btn-sm btn-secondary collapse-btn" data-collapse-section="${escapeHtml(group.sectionId)}" aria-label="${collapsed ? 'Expand' : 'Collapse'} ${escapeHtml(group.title)}">${collapsed ? 'Expand' : 'Collapse'}</button>
+            </div>
+          </div>
+          <div class="brand-products ${useVirtual ? 'virtual-scroll' : ''}" ${useVirtual ? 'style="max-height:400px;overflow-y:auto"' : ''}>
+            ${count ? (useVirtual ? this.renderVirtualProductList(sorted, group.title) : this.renderProductList(sorted)) : '<p class="empty-message">No products yet. Select models and click Add Selected, or use + Product.</p>'}
+          </div>
+        </div>
+      `;
+    }
+
+    const brand = group.brand;
+    const isFavorite = s.favoriteBrands.includes(brand);
+
+    return `
+      <div class="brand-card ${collapsed ? 'collapsed' : ''}" data-brand="${escapeHtml(brand)}" role="listitem">
+        <div class="brand-card-header">
+          <div class="brand-title-row">
+            <span class="drag-handle" draggable="true" title="Drag to reorder brand" aria-label="Drag to reorder ${escapeHtml(brand)}">⠿</span>
+            <h3 class="brand-name">${escapeHtml(brand)}</h3>
+            <span class="brand-count">${count}</span>
+            <button class="btn-icon favorite-btn ${isFavorite ? 'active' : ''}" data-fav="${escapeHtml(brand)}" aria-label="${isFavorite ? 'Remove from favorites' : 'Add to favorites'}" title="Favorite">★</button>
+          </div>
+          <div class="brand-actions">
+            <button class="btn btn-sm btn-secondary btn-select-group" data-group-key="${escapeHtml(brand)}" data-group-type="brand" aria-label="Select all ${escapeHtml(brand)}">Select All</button>
+            <button class="btn btn-sm btn-secondary" data-preview="${escapeHtml(brand)}" aria-label="Preview ${escapeHtml(brand)}">Preview</button>
+            <button class="btn btn-sm btn-primary" data-copy="${escapeHtml(brand)}" aria-label="Copy ${escapeHtml(brand)}">Copy ${escapeHtml(brand)}</button>
+            <button class="btn btn-sm btn-secondary collapse-btn" data-collapse="${escapeHtml(brand)}" aria-label="${collapsed ? 'Expand' : 'Collapse'} ${escapeHtml(brand)}">${collapsed ? 'Expand' : 'Collapse'}</button>
+          </div>
+        </div>
+        <div class="brand-products ${useVirtual ? 'virtual-scroll' : ''}" data-brand-products="${escapeHtml(brand)}" ${useVirtual ? `style="max-height:400px;overflow-y:auto"` : ''}>
+          ${useVirtual ? this.renderVirtualProductList(sorted, brand) : this.renderProductList(sorted)}
+        </div>
+      </div>
+    `;
   },
 
   renderProductList(productList) {
@@ -423,6 +484,7 @@ const app = {
           <span class="checkmark" aria-hidden="true">✓</span>
         </label>
         <span class="product-name" data-name-id="${p.id}" title="Double-click to edit name">${escapeHtml(displayName)}</span>
+        <button class="btn-icon btn-delete-product" data-delete-id="${p.id}" aria-label="Delete ${escapeHtml(displayName)}" title="Delete product">🗑</button>
         <button class="price-btn ${p.price === 0 ? 'price-empty' : ''}" data-price-id="${p.id}" aria-label="${hasProductPrice(p.price) ? `Edit price for ${escapeHtml(displayName)}` : `Add price for ${escapeHtml(displayName)}`}">${this.formatPriceLabel(p.price, s.currency)}</button>
         ${changed && hasProductPrice(p.previousPrice) ? `<span class="price-change-badge" title="Was ${formatPrice(p.previousPrice, s.currency)}">${p.price > p.previousPrice ? '▲' : '▼'}</span>` : ''}
       </li>
@@ -438,10 +500,20 @@ const app = {
       });
     });
 
+    container.querySelectorAll('[data-preview-section]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const sectionId = btn.dataset.previewSection;
+        const list = products.filter(p => p.sectionId === sectionId);
+        const text = buildFullMessage(list, { includeHeader: true, includeFooter: true });
+        const title = loadSettings().customSections.find(s => s.id === sectionId)?.title || 'Section';
+        showPreviewModal(text, `Preview: ${title}`);
+      });
+    });
+
     container.querySelectorAll('[data-copy]').forEach(btn => {
       btn.addEventListener('click', () => {
         const brand = btn.dataset.copy;
-        const brandItems = products.filter(p => p.brand === brand);
+        const brandItems = products.filter(p => p.brand === brand && !p.sectionId);
         const selectedInBrand = brandItems.filter(p => selectedProducts.has(p.id));
         if (selectedInBrand.length) {
           copySelected(products, new Set(selectedInBrand.map(p => p.id)));
@@ -451,17 +523,70 @@ const app = {
       });
     });
 
-    container.querySelectorAll('.btn-select-brand').forEach(btn => {
+    container.querySelectorAll('[data-copy-section]').forEach(btn => {
       btn.addEventListener('click', () => {
-        const brand = btn.dataset.selectBrand;
-        const brandItems = products.filter(p => p.brand === brand);
-        const allSelected = brandItems.every(p => selectedProducts.has(p.id));
-        for (const p of brandItems) {
+        const sectionId = btn.dataset.copySection;
+        const ids = new Set(products.filter(p => p.sectionId === sectionId).map(p => p.id));
+        copySelected(products, ids);
+      });
+    });
+
+    container.querySelectorAll('.btn-select-group').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const type = btn.dataset.groupType;
+        const key = btn.dataset.groupKey;
+        let groupItems = [];
+
+        if (type === 'section') {
+          groupItems = products.filter(p => p.sectionId === key);
+        } else {
+          groupItems = products.filter(p => p.brand === key && !p.sectionId);
+        }
+
+        const allSelected = groupItems.length > 0 && groupItems.every(p => selectedProducts.has(p.id));
+        for (const p of groupItems) {
           if (allSelected) selectedProducts.delete(p.id);
           else selectedProducts.add(p.id);
         }
         this.updateSelectionUI();
         this.renderBrandCards();
+      });
+    });
+
+    container.querySelectorAll('.btn-add-to-section').forEach(btn => {
+      btn.addEventListener('click', () => this.assignProductsToSection(btn.dataset.sectionId, [...selectedProducts]));
+    });
+
+    container.querySelectorAll('.btn-add-product-inline').forEach(btn => {
+      btn.addEventListener('click', () => this.openAddProductModal(btn.dataset.sectionId));
+    });
+
+    container.querySelectorAll('[data-delete-section]').forEach(btn => {
+      btn.addEventListener('click', () => this.removeCustomHeading(btn.dataset.deleteSection));
+    });
+
+    container.querySelectorAll('[data-collapse-section]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const sectionId = btn.dataset.collapseSection;
+        const collapsed = toggleSectionCollapsed(sectionId);
+        const card = btn.closest('.brand-card');
+        card?.classList.toggle('collapsed', collapsed);
+        btn.textContent = collapsed ? 'Expand' : 'Collapse';
+      });
+    });
+
+    container.querySelectorAll('.section-name[data-section-title]').forEach(el => {
+      el.addEventListener('dblclick', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.startSectionTitleEdit(el);
+      });
+    });
+
+    container.querySelectorAll('.btn-delete-product').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.deleteProductById(btn.dataset.deleteId);
       });
     });
 
@@ -505,14 +630,14 @@ const app = {
 
     cards.addEventListener('mousedown', (e) => {
       if (e.detail < 2) return;
-      if (e.target.closest('button, input, label, .price-change-badge')) return;
+      if (e.target.closest('button, input, label, .price-change-badge, .section-name, .btn-delete-product')) return;
       const row = e.target.closest('.product-row');
       if (!row) return;
       e.preventDefault();
     });
 
     cards.addEventListener('dblclick', (e) => {
-      if (e.target.closest('button, input, label, .price-change-badge')) return;
+      if (e.target.closest('button, input, label, .price-change-badge, .section-name, .btn-delete-product')) return;
       const row = e.target.closest('.product-row');
       if (!row) return;
       const nameEl = row.querySelector('.product-name[data-name-id]');
@@ -521,6 +646,205 @@ const app = {
       e.stopPropagation();
       this.startNameEdit(nameEl);
     });
+  },
+
+  createCustomHeading() {
+    const section = addCustomSection('New Heading');
+    this.renderBrandCards();
+    showToast('Custom heading added — double-click title to rename', 'success');
+    requestAnimationFrame(() => {
+      const titleEl = document.querySelector(`.section-name[data-section-title="${section.id}"]`);
+      if (titleEl) this.startSectionTitleEdit(titleEl);
+    });
+  },
+
+  async assignProductsToSection(sectionId, ids = []) {
+    if (!sectionId || !ids.length) {
+      showToast('Select products first', 'warning');
+      return;
+    }
+
+    for (const id of ids) {
+      const product = products.find(p => p.id === id);
+      if (!product) continue;
+      product.sectionId = sectionId;
+      product.updatedAt = Date.now();
+      await updateProduct(product);
+    }
+
+    selectedProducts.clear();
+    await this.refreshDashboard();
+    showToast(`Moved ${ids.length} product(s) to heading`, 'success');
+  },
+
+  async moveSelectedToSection(sectionId) {
+    const select = document.getElementById('move-to-section');
+    if (!sectionId) {
+      if (select) select.value = '';
+      return;
+    }
+
+    if (!selectedProducts.size) {
+      showToast('Select products first', 'warning');
+      if (select) select.value = '';
+      return;
+    }
+
+    if (sectionId === '__brand__') {
+      for (const id of selectedProducts) {
+        const product = products.find(p => p.id === id);
+        if (!product) continue;
+        delete product.sectionId;
+        product.updatedAt = Date.now();
+        await updateProduct(product);
+      }
+      const count = selectedProducts.size;
+      selectedProducts.clear();
+      await this.refreshDashboard();
+      showToast(`Moved ${count} product(s) back to brand groups`, 'success');
+    } else {
+      await this.assignProductsToSection(sectionId, [...selectedProducts]);
+    }
+
+    if (select) select.value = '';
+  },
+
+  openAddProductModal(sectionId = '') {
+    const modal = document.getElementById('add-product-modal');
+    const select = document.getElementById('add-product-section');
+    const s = loadSettings();
+
+    if (select) {
+      select.innerHTML = s.customSections.map(sec =>
+        `<option value="${escapeHtml(sec.id)}">${escapeHtml(sec.title)}</option>`
+      ).join('') || '<option value="">Create a heading first</option>';
+      select.value = sectionId || s.customSections[0]?.id || '';
+      select.disabled = !s.customSections.length;
+    }
+
+    document.getElementById('add-product-name').value = '';
+    document.getElementById('add-product-price').value = '';
+    modal?.showModal();
+  },
+
+  async submitAddProductForm() {
+    const sectionId = document.getElementById('add-product-section')?.value;
+    const name = document.getElementById('add-product-name')?.value?.trim();
+    const price = parsePrice(document.getElementById('add-product-price')?.value);
+
+    if (!sectionId) {
+      showToast('Create a custom heading first', 'warning');
+      return;
+    }
+
+    if (!name) {
+      showToast('Enter a product name', 'warning');
+      return;
+    }
+
+    const parsed = parseProductDisplayEdit(name, 'Other');
+    if (!parsed?.model) {
+      showToast('Could not parse name. Try: Model Name 8GB/256GB', 'error');
+      return;
+    }
+
+    const product = {
+      id: generateId(),
+      brand: 'Other',
+      model: parsed.model,
+      ram: parsed.ram || '',
+      storage: parsed.storage || '',
+      price: price || 0,
+      previousPrice: null,
+      sectionId,
+      updatedAt: Date.now()
+    };
+
+    products.push(product);
+    await updateProduct(product);
+    document.getElementById('add-product-modal')?.close();
+    await this.refreshDashboard();
+    showToast('Product added', 'success');
+  },
+
+  async deleteProductById(id) {
+    const product = products.find(p => p.id === id);
+    if (!product) return;
+
+    const name = productDisplayName(product);
+    if (!confirm(`Delete "${name}"?`)) return;
+
+    await deleteProduct(id);
+    products = products.filter(p => p.id !== id);
+    selectedProducts.delete(id);
+    await this.refreshDashboard();
+    showToast('Product deleted', 'success');
+  },
+
+  async removeCustomHeading(sectionId) {
+    const section = loadSettings().customSections.find(s => s.id === sectionId);
+    if (!section) return;
+
+    if (!confirm(`Delete heading "${section.title}"? Products will move back to brand groups.`)) return;
+
+    for (const p of products.filter(prod => prod.sectionId === sectionId)) {
+      delete p.sectionId;
+      p.updatedAt = Date.now();
+      await updateProduct(p);
+    }
+
+    deleteCustomSection(sectionId);
+    await this.refreshDashboard();
+    showToast('Heading deleted', 'success');
+  },
+
+  startSectionTitleEdit(titleEl) {
+    if (this.getActiveFieldEditor()?.isConnected) return;
+
+    const sectionId = titleEl.dataset.sectionTitle;
+    const originalTitle = titleEl.textContent.trim();
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'name-input section-title-input';
+    input.value = originalTitle;
+    input.setAttribute('aria-label', 'Edit heading title');
+
+    let cancelled = false;
+
+    const finish = (save) => {
+      if (cancelled) return;
+      const trimmed = input.value.trim();
+      if (save && trimmed && trimmed !== originalTitle) {
+        updateCustomSectionTitle(sectionId, trimmed);
+        this.renderBrandCards();
+        showToast('Heading renamed', 'success');
+      } else if (titleEl.isConnected) {
+        titleEl.textContent = originalTitle;
+      } else {
+        input.replaceWith(titleEl);
+        titleEl.textContent = originalTitle;
+      }
+    };
+
+    input.addEventListener('blur', () => finish(true));
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        input.blur();
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        cancelled = true;
+        if (input.isConnected) {
+          input.replaceWith(titleEl);
+          titleEl.textContent = originalTitle;
+        }
+      }
+    });
+
+    titleEl.replaceWith(input);
+    input.focus();
+    input.select();
   },
 
   getActiveFieldEditor() {

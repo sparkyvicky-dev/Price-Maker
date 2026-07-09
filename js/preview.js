@@ -3,7 +3,7 @@
  */
 
 import { loadSettings, getTodayFormatted } from './settings.js';
-import { formatProductCopyLine, sortProducts, groupByBrand, showToast } from './utils.js';
+import { formatProductCopyLine, sortProducts, groupProductsForDisplay, showToast } from './utils.js';
 
 const HEADER_EMOJIS = {
   storeName: '📱',
@@ -77,11 +77,15 @@ export function buildFooterText(footer = null) {
   return [f.line1, f.line2, f.line3].filter(Boolean).join('\n');
 }
 
-function appendBrandProducts(lines, brand, brandProducts, currency) {
-  if (!brandProducts.length) return false;
+function sectionHeading(title) {
+  return bold(`📋 ${title}`);
+}
 
-  lines.push(brandHeading(brand));
-  for (const p of sortProducts(brandProducts)) {
+function appendGroupProducts(lines, group, currency) {
+  if (!group.products?.length) return false;
+
+  lines.push(group.isCustom ? sectionHeading(group.title) : brandHeading(group.title));
+  for (const p of sortProducts(group.products)) {
     lines.push(formatProductCopyLine(p, currency));
   }
   return true;
@@ -94,14 +98,14 @@ export function buildBrandMessage(brand, products, options = {}) {
   const footer = options.footer || getFooterData();
   const includeHeader = options.includeHeader !== false;
   const includeFooter = options.includeFooter !== false;
-  const list = options.productList || products.filter(p => p.brand === brand);
+  const list = options.productList || products.filter(p => p.brand === brand && !p.sectionId);
 
   if (!list.length) return '';
 
   const lines = [];
   if (includeHeader) lines.push(buildHeaderText(header), '');
 
-  if (!appendBrandProducts(lines, brand, list, currency)) return '';
+  if (!appendGroupProducts(lines, { title: brand, products: list, isCustom: false }, currency)) return '';
 
   if (includeFooter) {
     lines.push('');
@@ -111,31 +115,43 @@ export function buildBrandMessage(brand, products, options = {}) {
   return lines.join('\n');
 }
 
+export function buildSectionMessage(sectionId, products, options = {}) {
+  const s = loadSettings();
+  const section = s.customSections.find(sec => sec.id === sectionId);
+  if (!section) return '';
+
+  const list = products.filter(p => p.sectionId === sectionId);
+  return buildProductsMessage(list, {
+    includeHeader: options.includeHeader !== false,
+    includeFooter: options.includeFooter !== false,
+    ...options
+  });
+}
+
 export function buildProductsMessage(productList, options = {}) {
   const s = loadSettings();
   const currency = options.currency || s.currency;
   const header = options.header || getHeaderData();
   const footer = options.footer || getFooterData();
-  const brandOrder = options.brandOrder || s.brandOrder;
   const includeHeader = options.includeHeader !== false;
   const includeFooter = options.includeFooter !== false;
 
   if (!productList.length) return '';
 
-  const groups = groupByBrand(productList, brandOrder);
+  const groups = groupProductsForDisplay(productList, s);
   const lines = [];
 
   if (includeHeader) lines.push(buildHeaderText(header), '');
 
-  let brandsAdded = 0;
-  for (const { brand, products: brandProducts } of groups) {
-    if (appendBrandProducts(lines, brand, brandProducts, currency)) {
+  let groupsAdded = 0;
+  for (const group of groups) {
+    if (appendGroupProducts(lines, group, currency)) {
       lines.push('');
-      brandsAdded++;
+      groupsAdded++;
     }
   }
 
-  if (!brandsAdded) return '';
+  if (!groupsAdded) return '';
 
   if (lines.length && lines[lines.length - 1] === '') lines.pop();
 

@@ -3,7 +3,7 @@
  */
 
 import { productsToWorkbook, workbookToBuffer } from './excel.js';
-import { downloadBlob, formatDate, formatPrice, productDisplayName, groupByBrand, sortProducts } from './utils.js';
+import { downloadBlob, formatDate, formatPrice, productDisplayName, groupProductsForDisplay, sortProducts } from './utils.js';
 import { loadSettings } from './settings.js';
 import { getHeaderData, getFooterData, buildFullMessage } from './preview.js';
 import { exportAllData } from './db.js';
@@ -71,11 +71,11 @@ function buildPrintableHtml(products) {
   const s = loadSettings();
   const header = getHeaderData();
   const footer = getFooterData();
-  const groups = groupByBrand(products, s.brandOrder);
+  const groups = groupProductsForDisplay(products, s);
 
-  const brandHtml = groups.map(g => `
+  const brandHtml = groups.filter(g => g.products.length).map(g => `
     <div class="brand-section">
-      <h2>${g.brand}</h2>
+      <h2>${g.title}</h2>
       <table>
         <tbody>
           ${sortProducts(g.products).map(p => `

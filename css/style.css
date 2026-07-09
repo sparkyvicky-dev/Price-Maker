@@ -470,6 +470,44 @@ body {
 }
 .brand-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 
+.btn-delete-product {
+  color: var(--text-muted);
+  font-size: 1rem;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+.btn-delete-product:hover { color: var(--danger); background: rgba(239, 68, 68, 0.12); }
+
+.btn-delete-section {
+  color: var(--text-muted);
+  font-size: 1rem;
+  padding: 4px 8px;
+}
+.btn-delete-section:hover { color: var(--danger); }
+
+.section-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--primary-light);
+  cursor: text;
+  user-select: none;
+  border-radius: var(--radius-sm);
+  padding: 2px 4px;
+}
+.section-name:hover { background: var(--bg-elevated); }
+
+.custom-section-card .brand-card-header {
+  border-left: 3px solid var(--primary);
+}
+
+.move-to-section {
+  min-width: 160px;
+  max-width: 220px;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+}
+
 .product-list { list-style: none; }
 .product-row {
   display: flex;

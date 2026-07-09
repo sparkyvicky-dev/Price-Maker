@@ -322,6 +322,48 @@ export function groupByBrand(products, brandOrder = []) {
 }
 
 /**
+ * Group products for display: custom headings first, then brand groups.
+ */
+export function groupProductsForDisplay(products, settings = {}) {
+  const sections = settings.customSections || [];
+  const sectionOrder = settings.sectionOrder || [];
+  const sectionMap = new Map(sections.map(sec => [sec.id, sec]));
+  const groups = [];
+
+  const orderedSectionIds = [...sectionOrder];
+  for (const sec of sections) {
+    if (!orderedSectionIds.includes(sec.id)) orderedSectionIds.push(sec.id);
+  }
+
+  for (const id of orderedSectionIds) {
+    const section = sectionMap.get(id);
+    if (!section) continue;
+    groups.push({
+      key: id,
+      title: section.title,
+      products: products.filter(p => p.sectionId === id),
+      isCustom: true,
+      sectionId: id,
+      collapsed: !!settings.collapsedSections?.[id]
+    });
+  }
+
+  const unsectioned = products.filter(p => !p.sectionId || !sectionMap.has(p.sectionId));
+  for (const { brand, products: brandProducts } of groupByBrand(unsectioned, settings.brandOrder || [])) {
+    groups.push({
+      key: `brand:${brand}`,
+      title: brand,
+      products: brandProducts,
+      isCustom: false,
+      brand,
+      collapsed: !!settings.collapsedBrands?.[brand]
+    });
+  }
+
+  return groups;
+}
+
+/**
  * Show/hide loading overlay
  */
 export function showLoading(show = true, text = 'Loading...') {

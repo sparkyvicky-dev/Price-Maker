@@ -158,6 +158,11 @@
           <button class="chip" data-filter="decreased">Decreased</button>
           <button class="chip" data-filter="favorites">Favorites</button>
         </div>
+        <button id="btn-add-heading" class="btn btn-secondary btn-sm" aria-label="Add custom heading">+ Add Heading</button>
+        <select id="move-to-section" class="form-select move-to-section" aria-label="Move selected products to heading">
+          <option value="">Move Selected to…</option>
+        </select>
+        <button id="btn-add-product" class="btn btn-secondary btn-sm" aria-label="Add product manually">+ Add Product</button>
         <button id="btn-select-all" class="btn btn-secondary btn-sm" aria-label="Select all visible models">Select All</button>
         <button id="btn-clear-prices" class="btn btn-secondary btn-sm" aria-label="Clear prices for selected or visible models">Clear Price</button>
         <button id="btn-undo-price" class="btn btn-secondary btn-sm" aria-label="Undo last price change" disabled>↩ Undo Price</button>
@@ -311,6 +316,26 @@
       <button id="btn-preview-copy" class="btn btn-primary">Copy to Clipboard</button>
       <a id="btn-whatsapp-link" class="btn btn-success" href="#" target="_blank" rel="noopener">Open WhatsApp</a>
     </div>
+  </dialog>
+
+  <!-- Add Product Modal -->
+  <dialog id="add-product-modal" class="modal" aria-labelledby="add-product-title">
+    <div class="modal-header">
+      <h2 id="add-product-title">Add Product</h2>
+      <button class="modal-close" data-close-modal aria-label="Close add product">&times;</button>
+    </div>
+    <form id="add-product-form" class="bulk-edit-form">
+      <label>Heading
+        <select id="add-product-section" class="form-select" aria-label="Custom heading"></select>
+      </label>
+      <label>Product Name
+        <input type="text" id="add-product-name" class="form-input" placeholder="e.g. T4 Lite 4GB/64GB" required aria-label="Product name">
+      </label>
+      <label>Price (optional)
+        <input type="number" id="add-product-price" class="form-input" min="0" step="1" placeholder="e.g. 10400" aria-label="Product price">
+      </label>
+      <button type="submit" class="btn btn-primary">Add Product</button>
+    </form>
   </dialog>
 
   <!-- Bulk Edit Modal -->
