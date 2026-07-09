@@ -682,6 +682,7 @@ const app = {
         this.createCustomHeading(title);
         if (input) input.value = '';
       });
+      form.querySelector('.inline-heading-name')?.addEventListener('mousedown', (e) => e.stopPropagation());
     });
 
     container.querySelectorAll('[data-delete-section]').forEach(btn => {
