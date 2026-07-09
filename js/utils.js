@@ -378,6 +378,85 @@ export function parseRamStorage(value) {
   return { ram: str, storage: '' };
 }
 
+function normalizeSpecGb(value) {
+  if (!value) return '';
+  const match = String(value).match(/(\d+)/);
+  return match ? `${match[1]}GB` : String(value).replace(/\s/g, '').toUpperCase();
+}
+
+function stripBrandPrefixFromModel(name, brand) {
+  let result = String(name || '').trim();
+  if (!result) return result;
+
+  if (brand) {
+    result = result.replace(new RegExp(`^${brand}\\s+`, 'i'), '').trim();
+  }
+
+  const aliases = [
+    /^vivo\s+/i, /^(moto|motorola)\s+/i, /^(iphone|apple)\s+/i, /^(samsung|galaxy)\s+/i,
+    /^(google\s+)?pixel\s+/i, /^iqoo\s+/i, /^nothing\s+/i, /^oppo\s+/i, /^realme\s+/i,
+    /^oneplus\s+/i, /^poco\s+/i, /^redmi\s+/i, /^xiaomi\s+/i, /^nokia\s+/i
+  ];
+  for (const pattern of aliases) {
+    if (pattern.test(result)) {
+      result = result.replace(pattern, '').trim();
+      break;
+    }
+  }
+
+  return result || String(name || '').trim();
+}
+
+/**
+ * Parse an edited display name back into model + RAM + storage fields.
+ */
+export function parseProductDisplayEdit(text, brand = '') {
+  let name = String(text || '').replace(/\u00a0/g, ' ').trim();
+  if (!name) return null;
+
+  let ram = '';
+  let storage = '';
+
+  const parenMatch = name.match(/\(([^)]+)\)\s*$/);
+  if (parenMatch) {
+    const parsed = parseRamStorage(parenMatch[1]);
+    ram = normalizeSpecGb(parsed.ram);
+    storage = normalizeSpecGb(parsed.storage);
+    name = name.slice(0, parenMatch.index).trim();
+  }
+
+  const inlineSpec = name.match(/\s(\d+\s*GB)\s*\/\s*(\d+\s*GB)\s*$/i);
+  if (inlineSpec && !ram) {
+    ram = normalizeSpecGb(inlineSpec[1]);
+    storage = normalizeSpecGb(inlineSpec[2]);
+    name = name.slice(0, inlineSpec.index).trim();
+  }
+
+  const spacedSpec = name.match(/\s(\d+\s*GB)\s+(\d+\s*GB)\s*$/i);
+  if (spacedSpec && !ram) {
+    ram = normalizeSpecGb(spacedSpec[1]);
+    storage = normalizeSpecGb(spacedSpec[2]);
+    name = name.slice(0, spacedSpec.index).trim();
+  }
+
+  const storageOnly = name.match(/\s(\d+\s*GB)\s*$/i);
+  if (storageOnly && !ram && !storage) {
+    storage = normalizeSpecGb(storageOnly[1]);
+    name = name.slice(0, storageOnly.index).trim();
+  }
+
+  name = stripBrandPrefixFromModel(name, brand);
+  let model = stripTrailingColor(name.trim());
+  if (!model) return null;
+
+  if (brand === 'Apple' && !/^iphone\b/i.test(model)) model = `iPhone ${model}`;
+  else if (brand === 'Apple') model = model.replace(/^iphone\b/i, 'iPhone');
+  if (brand === 'Google' && !/^pixel\b/i.test(model)) model = `Pixel ${model}`;
+  else if (brand === 'Google') model = model.replace(/^pixel\b/i, 'Pixel');
+
+  return { model, ram, storage };
+}
+
 /**
  * Simple virtual scroll helper - returns visible slice
  */

@@ -4,7 +4,7 @@
 
 import {
   debounce, generateId, groupByBrand, sortProducts, productDisplayName,
-  formatPrice, parsePrice, showToast, showLoading, escapeHtml, getVisibleSlice, todayKey
+  formatPrice, parsePrice, parseProductDisplayEdit, showToast, showLoading, escapeHtml, getVisibleSlice, todayKey
 } from './utils.js';
 
 import {
@@ -207,6 +207,13 @@ const app = {
     }
   },
 
+  deselectAll() {
+    if (!selectedProducts.size) return;
+    selectedProducts.clear();
+    this.updateSelectionUI();
+    this.renderBrandCards();
+  },
+
   toggleSelectAll() {
     const filtered = this.getFilteredProducts();
     if (!filtered.length) return;
@@ -397,7 +404,7 @@ const app = {
           <input type="checkbox" class="product-checkbox" data-select-id="${p.id}" ${isSelected ? 'checked' : ''} aria-label="Select ${escapeHtml(displayName)}">
           <span class="checkmark" aria-hidden="true">✓</span>
         </label>
-        <span class="product-name" title="${escapeHtml(displayName)}">${escapeHtml(displayName)}</span>
+        <span class="product-name" data-name-id="${p.id}" title="Double-click to edit name">${escapeHtml(displayName)}</span>
         <button class="price-btn ${p.price === 0 ? 'price-empty' : ''}" data-price-id="${p.id}" aria-label="Edit price for ${escapeHtml(displayName)}">${this.formatPriceLabel(p.price, s.currency)}</button>
         ${changed ? `<span class="price-change-badge" title="Was ${formatPrice(p.previousPrice, s.currency)}">${p.price > p.previousPrice ? '▲' : '▼'}</span>` : ''}
       </li>
@@ -471,6 +478,102 @@ const app = {
     container.querySelectorAll('.price-btn').forEach(btn => {
       btn.addEventListener('click', (e) => this.startPriceEdit(e.target));
     });
+
+    container.querySelectorAll('.product-name[data-name-id]').forEach(el => {
+      el.addEventListener('dblclick', (e) => {
+        e.preventDefault();
+        this.startNameEdit(el);
+      });
+    });
+  },
+
+  startNameEdit(span) {
+    if (document.querySelector('.name-input, .price-input')) return;
+
+    const id = span.dataset.nameId;
+    const product = products.find(p => p.id === id);
+    if (!product) return;
+
+    const originalDisplay = productDisplayName(product);
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'name-input';
+    input.value = originalDisplay;
+    input.setAttribute('aria-label', 'Edit product name');
+
+    let cancelled = false;
+    let saving = false;
+
+    const restore = () => {
+      if (span.isConnected) span.textContent = originalDisplay;
+      else if (!cancelled && !saving) input.replaceWith(span);
+    };
+
+    const save = async () => {
+      if (cancelled || saving || !input.isConnected) return;
+
+      const trimmed = input.value.replace(/\u00a0/g, ' ').trim();
+      if (!trimmed) {
+        showToast('Name cannot be empty', 'warning');
+        input.focus();
+        return;
+      }
+
+      if (trimmed === originalDisplay) {
+        input.replaceWith(span);
+        span.textContent = originalDisplay;
+        return;
+      }
+
+      const parsed = parseProductDisplayEdit(trimmed, product.brand);
+      if (!parsed?.model) {
+        showToast('Could not parse name. Try: Model Name 8GB/256GB', 'error');
+        input.focus();
+        input.select();
+        return;
+      }
+
+      saving = true;
+      product.model = parsed.model;
+      product.ram = parsed.ram || '';
+      product.storage = parsed.storage || '';
+      product.updatedAt = Date.now();
+
+      try {
+        await updateProduct(product);
+        this.addRecentlyEdited(product);
+        await this.refreshDashboard();
+        showToast('Name updated', 'success');
+      } catch (err) {
+        saving = false;
+        showToast('Failed to save name: ' + err.message, 'error');
+        restore();
+      }
+    };
+
+    input.addEventListener('blur', () => {
+      if (!cancelled) save();
+    });
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        input.blur();
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        cancelled = true;
+        if (input.isConnected) {
+          input.replaceWith(span);
+          span.textContent = originalDisplay;
+        }
+      }
+    });
+
+    span.replaceWith(input);
+    input.focus();
+    input.select();
   },
 
   startPriceEdit(btn) {
@@ -506,6 +609,8 @@ const app = {
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
       if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
         input.value = product.price;
         input.blur();
       }
@@ -948,7 +1053,16 @@ const app = {
       }
       if (e.key === '?' && !e.ctrlKey) { document.getElementById('shortcuts-modal')?.showModal(); }
       if (e.key === 'Escape') {
-        document.querySelectorAll('dialog[open]').forEach(d => d.close());
+        const openDialogs = document.querySelectorAll('dialog[open]');
+        if (openDialogs.length) {
+          openDialogs.forEach(d => d.close());
+          return;
+        }
+        if (e.target.matches('.name-input, .price-input')) return;
+        if (selectedProducts.size > 0) {
+          e.preventDefault();
+          this.deselectAll();
+        }
       }
     });
   }
