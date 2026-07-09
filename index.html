@@ -129,8 +129,22 @@
       <div class="editor-card" role="region" aria-labelledby="header-editor-title">
         <h2 id="header-editor-title" class="card-title">Header Editor</h2>
         <div class="editor-grid">
-          <label>Title <input type="text" id="edit-title" class="form-input" value="Price List" aria-label="List title"></label>
-          <label>Validity <input type="text" id="edit-validity" class="form-input" value="Valid For Today Only" aria-label="Validity text"></label>
+          <div class="template-field">
+            <span class="field-label">Title</span>
+            <div class="template-row">
+              <select id="title-template-select" class="form-select template-select" aria-label="Title templates"></select>
+              <button type="button" id="btn-add-title-template" class="btn btn-secondary btn-sm">+ Add Template</button>
+            </div>
+            <input type="text" id="edit-title" class="form-input" value="Price List" aria-label="List title">
+          </div>
+          <div class="template-field">
+            <span class="field-label">Validity</span>
+            <div class="template-row">
+              <select id="validity-template-select" class="form-select template-select" aria-label="Validity templates"></select>
+              <button type="button" id="btn-add-validity-template" class="btn btn-secondary btn-sm">+ Add Template</button>
+            </div>
+            <input type="text" id="edit-validity" class="form-input" value="Valid For Today Only" aria-label="Validity text">
+          </div>
         </div>
       </div>
 
@@ -168,6 +182,13 @@
       <!-- Footer Editor -->
       <div class="editor-card" role="region" aria-labelledby="footer-editor-title">
         <h2 id="footer-editor-title" class="card-title">Footer Editor</h2>
+        <div class="template-field footer-template-field">
+          <span class="field-label">Footer Template</span>
+          <div class="template-row">
+            <select id="footer-template-select" class="form-select template-select" aria-label="Footer templates"></select>
+            <button type="button" id="btn-add-footer-template" class="btn btn-secondary btn-sm">+ Add Template</button>
+          </div>
+        </div>
         <div class="editor-grid footer-grid">
           <label>Line 1 <input type="text" id="edit-footer-1" class="form-input" value="No DOA Support" aria-label="Footer line 1"></label>
           <label>Line 2 <input type="text" id="edit-footer-2" class="form-input" value="Payment Always Prepaid" aria-label="Footer line 2"></label>

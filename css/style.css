@@ -365,6 +365,28 @@ body {
 }
 .editor-grid label { display: flex; flex-direction: column; gap: 4px; font-size: 0.85rem; color: var(--text-muted); }
 
+.template-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.footer-template-field { margin-bottom: 12px; }
+.field-label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.template-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.template-select {
+  flex: 1;
+  min-width: 180px;
+}
+
 .form-input, .form-select, .search-input {
   padding: 10px 14px;
   border: 1px solid var(--border);

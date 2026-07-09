@@ -16,7 +16,8 @@ import {
 import {
   loadSettings, saveSettings, initTheme, syncHeaderFooterToUI,
   saveHeaderFooterFromUI, toggleFavoriteBrand, updateBrandOrder,
-  toggleBrandCollapsed, populateSettingsForm, readSettingsForm, applyTheme, getTodayFormatted
+  toggleBrandCollapsed, populateSettingsForm, readSettingsForm, applyTheme, getTodayFormatted,
+  initTemplateControls
 } from './settings.js';
 
 import { parseExcelFile } from './excel.js';
@@ -56,6 +57,9 @@ const app = {
 
       syncHeaderFooterToUI();
       this.bindEvents();
+      initTemplateControls((type, message) => {
+        if (type && message) showToast(message, type);
+      });
       this.initNetworkStatus();
       this.initKeyboardShortcuts();
       this.startAutosave();
