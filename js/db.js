@@ -60,16 +60,19 @@ async function tx(storeNames, mode, callback) {
       stores[name] = transaction.objectStore(name);
     }
 
-    let result;
+    let callbackResult;
     try {
-      result = callback(stores, transaction);
+      callbackResult = callback(stores, transaction);
     } catch (err) {
       reject(err);
       return;
     }
 
-    transaction.oncomplete = () => resolve(result);
     transaction.onerror = () => reject(transaction.error);
+    transaction.onabort = () => reject(transaction.error || new Error('Transaction aborted'));
+    transaction.oncomplete = () => {
+      Promise.resolve(callbackResult).then(resolve, reject);
+    };
   });
 }
 
