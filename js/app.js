@@ -119,6 +119,8 @@ const app = {
     });
 
     document.getElementById('btn-select-all')?.addEventListener('click', () => this.toggleSelectAll());
+    document.getElementById('btn-clear-prices')?.addEventListener('click', () => this.clearPrices());
+    document.getElementById('btn-undo-price')?.addEventListener('click', () => this.undoLastEdit());
     document.getElementById('btn-bulk-edit')?.addEventListener('click', () => this.openBulkEdit());
     document.getElementById('bulk-edit-form')?.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -178,6 +180,7 @@ const app = {
     this.renderRecentlyEdited();
     this.populateBulkBrands();
     this.updateSelectionUI();
+    this.updatePriceActionUI();
   },
 
   updateSelectionUI() {
@@ -215,6 +218,50 @@ const app = {
     }
     this.updateSelectionUI();
     this.renderBrandCards();
+  },
+
+  getPriceEditTargets() {
+    if (selectedProducts.size > 0) {
+      return products.filter(p => selectedProducts.has(p.id));
+    }
+    return this.getFilteredProducts();
+  },
+
+  async clearPrices() {
+    const targets = this.getPriceEditTargets().filter(p => p.price > 0);
+    if (!targets.length) {
+      showToast('No prices to clear', 'info');
+      return;
+    }
+
+    const items = targets.map(p => {
+      if (p.previousPrice == null) p.previousPrice = p.price;
+      return { id: p.id, oldPrice: p.price };
+    });
+
+    undoStack.push({ batch: true, items });
+
+    for (const p of targets) {
+      p.price = 0;
+      p.updatedAt = Date.now();
+      await updateProduct(p);
+    }
+
+    await this.refreshDashboard();
+    showToast(`Cleared ${targets.length} price(s)`, 'success');
+  },
+
+  updatePriceActionUI() {
+    const undoBtn = document.getElementById('btn-undo-price');
+    if (!undoBtn) return;
+
+    const count = undoStack.length;
+    undoBtn.disabled = count === 0;
+    undoBtn.textContent = count > 1 ? `↩ Undo Price (${count})` : '↩ Undo Price';
+  },
+
+  formatPriceLabel(price, currency) {
+    return price > 0 ? formatPrice(price, currency) : '—';
   },
 
   async updateStats() {
@@ -351,7 +398,7 @@ const app = {
           <span class="checkmark" aria-hidden="true">✓</span>
         </label>
         <span class="product-name" title="${escapeHtml(displayName)}">${escapeHtml(displayName)}</span>
-        <button class="price-btn" data-price-id="${p.id}" aria-label="Edit price for ${escapeHtml(displayName)}">${formatPrice(p.price, s.currency)}</button>
+        <button class="price-btn ${p.price === 0 ? 'price-empty' : ''}" data-price-id="${p.id}" aria-label="Edit price for ${escapeHtml(displayName)}">${this.formatPriceLabel(p.price, s.currency)}</button>
         ${changed ? `<span class="price-change-badge" title="Was ${formatPrice(p.previousPrice, s.currency)}">${p.price > p.previousPrice ? '▲' : '▼'}</span>` : ''}
       </li>
     `;
@@ -440,18 +487,18 @@ const app = {
 
     const save = async () => {
       const newPrice = parsePrice(input.value);
-      if (newPrice > 0 && newPrice !== product.price) {
-        undoStack.push({ id, oldPrice: product.price, newPrice: product.price });
+      if (newPrice >= 0 && newPrice !== product.price) {
+        undoStack.push({ id, oldPrice: product.price });
         if (product.previousPrice == null) product.previousPrice = product.price;
         product.price = newPrice;
         product.updatedAt = Date.now();
         await updateProduct(product);
         this.addRecentlyEdited(product);
         await this.refreshDashboard();
-        showToast('Price updated', 'success');
-        this.checkPriceAlert(product);
+        showToast(newPrice === 0 ? 'Price cleared' : 'Price updated', 'success');
+        if (newPrice > 0) this.checkPriceAlert(product);
       } else {
-        btn.textContent = formatPrice(product.price, loadSettings().currency);
+        btn.textContent = this.formatPriceLabel(product.price, loadSettings().currency);
       }
     };
 
@@ -744,9 +791,9 @@ const app = {
     }
 
     let targets = brand ? products.filter(p => p.brand === brand) : products;
+    const items = targets.map(p => ({ id: p.id, oldPrice: p.price }));
 
     for (const p of targets) {
-      undoStack.push({ id: p.id, oldPrice: p.price });
       if (p.previousPrice == null) p.previousPrice = p.price;
 
       switch (type) {
@@ -758,6 +805,8 @@ const app = {
       p.updatedAt = Date.now();
       await updateProduct(p);
     }
+
+    undoStack.push({ batch: true, items });
 
     document.getElementById('bulk-edit-modal')?.close();
     await this.refreshDashboard();
@@ -777,19 +826,31 @@ const app = {
     showToast('List duplicated', 'success');
   },
 
-  undoLastEdit() {
+  async undoLastEdit() {
     const last = undoStack.pop();
     if (!last) {
       showToast('Nothing to undo', 'info');
+      this.updatePriceActionUI();
       return;
     }
-    const product = products.find(p => p.id === last.id);
-    if (product) {
-      product.price = last.oldPrice;
-      updateProduct(product);
-      this.refreshDashboard();
-      showToast('Undo successful', 'success');
+
+    const restore = async (entry) => {
+      const product = products.find(p => p.id === entry.id);
+      if (!product) return;
+      product.price = entry.oldPrice;
+      product.updatedAt = Date.now();
+      await updateProduct(product);
+    };
+
+    if (last.batch && last.items?.length) {
+      for (const entry of last.items) await restore(entry);
+      showToast(`Restored ${last.items.length} price(s)`, 'success');
+    } else if (last.id != null) {
+      await restore(last);
+      showToast('Price restored', 'success');
     }
+
+    await this.refreshDashboard();
   },
 
   saveSettingsForm() {

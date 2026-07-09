@@ -510,6 +510,7 @@ body {
   transition: all var(--transition);
 }
 .price-btn:hover { border-color: var(--primary); color: var(--primary-light); }
+.price-btn.price-empty { color: var(--text-muted); font-style: italic; font-weight: 500; }
 
 .price-input {
   width: 100px;
