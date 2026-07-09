@@ -1082,6 +1082,7 @@ const app = {
       await this.refreshDashboard();
       let msg = `Loaded ${products.length} products`;
       if (meta.format === 'sparky-stock') msg += ' (Sparky Stock Report format)';
+      else if (meta.format === 'stock-summary') msg += ' (Stock Summary — names imported, enter prices manually)';
       else if (meta.format === 'pakkabill') msg += ' (PakkaBill export)';
       if (meta.missingPrices > 0) msg += ` — ${meta.missingPrices} items need price entry`;
       showToast(msg, 'success', 5000);

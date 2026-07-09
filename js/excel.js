@@ -1,6 +1,6 @@
 /**
  * Excel file parsing using SheetJS
- * Supports: Sparky Stock Report, PakkaBill Stock Summary, generic formats
+ * Supports: Sparky Stock Report, PakkaBill Stock Summary, Stock Summary Report, generic formats
  */
 
 import { generateId, detectBrand, parsePrice, findColumn, parseRamStorage, capitalizeWords, stripTrailingColor } from './utils.js';
@@ -53,6 +53,11 @@ export async function parseExcelFile(file) {
       products.push(...items);
       meta.missingPrices += missingPrices;
       meta.format = 'sparky-stock';
+    } else if (format === 'stock-summary') {
+      const { items, missingPrices } = parseStockSummaryReport(cleaned);
+      products.push(...items);
+      meta.missingPrices += missingPrices;
+      meta.format = 'stock-summary';
     } else if (format === 'pakkabill') {
       products.push(...parsePakkaBillExport(cleaned));
       meta.format = 'pakkabill';
@@ -78,6 +83,10 @@ function cleanCell(value) {
  * Detect Excel format from first rows
  */
 function detectFormat(rows) {
+  for (const row of rows.slice(0, 15)) {
+    if (isStockSummaryHeader(row)) return 'stock-summary';
+  }
+
   const flat = rows.slice(0, 8).flat().join(' ').toLowerCase();
 
   if (flat.includes('stock summary') && flat.includes('pakkabill') === false) {
@@ -94,6 +103,17 @@ function detectFormat(rows) {
   }
 
   return 'generic';
+}
+
+function isStockSummaryHeader(row) {
+  if (!row?.length) return false;
+  const headers = row.map(c => String(c).trim());
+  const itemCol = findColumn(headers, 'item name', 'item', 'product name');
+  if (itemCol < 0) return false;
+
+  const hasPrice = findColumn(headers, 'purchase price', 'purchase', 'sale price', 'sale') >= 0;
+  const hasStock = findColumn(headers, 'stock quantity', 'available quantity', 'quantity', 'qty') >= 0;
+  return hasPrice || hasStock;
 }
 
 function isSparkySectionHeader(row) {
@@ -143,6 +163,55 @@ function parseSparkyStockReport(rows) {
       ram: parsed.ram,
       storage: parsed.storage,
       price,
+      previousPrice: null,
+      updatedAt: Date.now()
+    });
+  }
+
+  return { items: products, missingPrices };
+}
+
+/**
+ * Parse Stock Summary Report exports
+ * Columns: Item Name, Sale Price, Purchase Price, Stock Quantity, ...
+ * Imports product names only — prices are left empty for manual entry.
+ */
+function parseStockSummaryReport(rows) {
+  let headerIdx = -1;
+  let headers = [];
+
+  for (let i = 0; i < Math.min(20, rows.length); i++) {
+    if (isStockSummaryHeader(rows[i])) {
+      headerIdx = i;
+      headers = rows[i].map(c => String(c).trim());
+      break;
+    }
+  }
+
+  if (headerIdx < 0) return { items: [], missingPrices: 0 };
+
+  const itemCol = findColumn(headers, 'item name', 'item', 'product name');
+  const products = [];
+  let missingPrices = 0;
+
+  for (let i = headerIdx + 1; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row || row.every(c => !c && c !== 0)) continue;
+
+    const itemName = String(row[itemCol] || '').trim();
+    if (!itemName || /^item name$/i.test(itemName)) continue;
+
+    const parsed = parsePakkaBillItem(itemName, '');
+    if (!parsed.model) continue;
+
+    missingPrices++;
+    products.push({
+      id: generateId(),
+      brand: parsed.brand,
+      model: parsed.model,
+      ram: parsed.ram,
+      storage: parsed.storage,
+      price: 0,
       previousPrice: null,
       updatedAt: Date.now()
     });
@@ -221,8 +290,14 @@ function parsePakkaBillItem(itemName, category) {
     const inner = parenSpec[1];
     if (/\d+\s*gb/i.test(inner) || /\d+\s*\/\s*\d+/i.test(inner) || /gb\/gb/i.test(inner)) {
       const parsed = parseRamStorage(inner);
-      ram = normalizeSpec(parsed.ram);
-      storage = normalizeSpec(parsed.storage);
+      const isSingleStorage = parsed.ram && !parsed.storage && /^\d+\s*gb$/i.test(String(parsed.ram).trim());
+      if (isSingleStorage && /iphone|apple|pixel|pro max|pro\b/i.test(name)) {
+        storage = normalizeSpec(parsed.ram);
+        ram = '';
+      } else {
+        ram = normalizeSpec(parsed.ram);
+        storage = normalizeSpec(parsed.storage);
+      }
       name = name.replace(parenSpec[0], '').trim();
     }
   }
@@ -238,6 +313,12 @@ function parsePakkaBillItem(itemName, category) {
   if (storageOnly && !ram && !storage) {
     storage = normalizeSpec(storageOnly[0]);
     name = name.replace(storageOnly[0], '').trim();
+  }
+
+  const shortStorage = name.match(/\b(\d{2,4})\s*$/);
+  if (shortStorage && !ram && !storage) {
+    storage = `${shortStorage[1]}GB`;
+    name = name.replace(shortStorage[0], '').trim();
   }
 
   brand = stripBrandFromModel(name, brand);
