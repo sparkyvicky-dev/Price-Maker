@@ -231,6 +231,21 @@ const app = {
     this.renderBrandCards();
   },
 
+  createPriceSnapshot() {
+    return products.map(p => ({ id: p.id, oldPrice: p.price }));
+  },
+
+  pushPriceUndoSnapshot(snapshot) {
+    undoStack = undoStack.filter(entry => entry.kind !== 'prices');
+    undoStack.push({ batch: true, items: snapshot, kind: 'prices' });
+    this.updatePriceActionUI();
+  },
+
+  pushSinglePriceUndo(entry) {
+    undoStack.push({ ...entry, kind: 'prices' });
+    this.updatePriceActionUI();
+  },
+
   getPriceEditTargets() {
     if (selectedProducts.size > 0) {
       return products.filter(p => selectedProducts.has(p.id));
@@ -245,19 +260,16 @@ const app = {
       return;
     }
 
-    const items = targets.map(p => {
-      if (p.previousPrice == null) p.previousPrice = p.price;
-      return { id: p.id, oldPrice: p.price };
-    });
-
-    undoStack.push({ batch: true, items });
+    const snapshot = this.createPriceSnapshot();
+    this.pushPriceUndoSnapshot(snapshot);
 
     for (const p of targets) {
+      if (p.previousPrice == null) p.previousPrice = p.price;
       p.price = 0;
       p.updatedAt = Date.now();
-      await updateProduct(p);
     }
 
+    await saveAllProducts(products);
     await this.refreshDashboard();
     showToast(`Cleared ${targets.length} price(s)`, 'success');
   },
@@ -595,7 +607,7 @@ const app = {
     const save = async () => {
       const newPrice = parsePrice(input.value);
       if (newPrice >= 0 && newPrice !== product.price) {
-        undoStack.push({ id, oldPrice: product.price });
+        this.pushSinglePriceUndo({ id, oldPrice: product.price });
         if (product.previousPrice == null) product.previousPrice = product.price;
         product.price = newPrice;
         product.updatedAt = Date.now();
@@ -901,7 +913,8 @@ const app = {
     }
 
     let targets = brand ? products.filter(p => p.brand === brand) : products;
-    const items = targets.map(p => ({ id: p.id, oldPrice: p.price }));
+    const snapshot = this.createPriceSnapshot();
+    this.pushPriceUndoSnapshot(snapshot);
 
     for (const p of targets) {
       if (p.previousPrice == null) p.previousPrice = p.price;
@@ -913,10 +926,9 @@ const app = {
         case 'fixed-decrease': p.price = Math.max(0, p.price - value); break;
       }
       p.updatedAt = Date.now();
-      await updateProduct(p);
     }
 
-    undoStack.push({ batch: true, items });
+    await saveAllProducts(products);
 
     document.getElementById('bulk-edit-modal')?.close();
     await this.refreshDashboard();
@@ -944,23 +956,37 @@ const app = {
       return;
     }
 
-    const restore = async (entry) => {
-      const product = products.find(p => p.id === entry.id);
-      if (!product) return;
-      product.price = entry.oldPrice;
-      product.updatedAt = Date.now();
-      await updateProduct(product);
-    };
-
     if (last.batch && last.items?.length) {
-      for (const entry of last.items) await restore(entry);
-      showToast(`Restored ${last.items.length} price(s)`, 'success');
-    } else if (last.id != null) {
-      await restore(last);
-      showToast('Price restored', 'success');
+      const priceMap = new Map(last.items.map(entry => [entry.id, entry.oldPrice]));
+      let restored = 0;
+
+      for (const product of products) {
+        if (!priceMap.has(product.id)) continue;
+        product.price = priceMap.get(product.id);
+        product.updatedAt = Date.now();
+        restored++;
+      }
+
+      await saveAllProducts(products);
+      await this.refreshDashboard();
+      showToast(`Restored ${restored} price(s)`, 'success');
+      return;
     }
 
-    await this.refreshDashboard();
+    if (last.id != null) {
+      const product = products.find(p => p.id === last.id);
+      if (product) {
+        product.price = last.oldPrice;
+        product.updatedAt = Date.now();
+        await updateProduct(product);
+        await this.refreshDashboard();
+        showToast('Price restored', 'success');
+        return;
+      }
+    }
+
+    this.updatePriceActionUI();
+    showToast('Nothing to undo', 'info');
   },
 
   saveSettingsForm() {
