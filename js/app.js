@@ -114,6 +114,8 @@ const app = {
       this.closeSidebar();
     });
 
+    this.bindProductNameEdit();
+
     ['edit-title', 'edit-validity', 'edit-footer-1', 'edit-footer-2', 'edit-footer-3'].forEach(id => {
       document.getElementById(id)?.addEventListener('change', () => saveHeaderFooterFromUI());
     });
@@ -415,7 +417,7 @@ const app = {
     const isSelected = selectedProducts.has(p.id);
 
     return `
-      <li class="product-row ${changeClass} ${isSelected ? 'selected' : ''}" data-id="${p.id}" role="listitem">
+      <li class="product-row ${changeClass} ${isSelected ? 'selected' : ''}" data-id="${p.id}" role="listitem" title="Double-click to edit name">
         <label class="product-select" title="Select for copy">
           <input type="checkbox" class="product-checkbox" data-select-id="${p.id}" ${isSelected ? 'checked' : ''} aria-label="Select ${escapeHtml(displayName)}">
           <span class="checkmark" aria-hidden="true">✓</span>
@@ -494,17 +496,40 @@ const app = {
     container.querySelectorAll('.price-btn').forEach(btn => {
       btn.addEventListener('click', (e) => this.startPriceEdit(e.target));
     });
+  },
 
-    container.querySelectorAll('.product-name[data-name-id]').forEach(el => {
-      el.addEventListener('dblclick', (e) => {
-        e.preventDefault();
-        this.startNameEdit(el);
-      });
+  bindProductNameEdit() {
+    const cards = document.getElementById('brand-cards');
+    if (!cards || cards.dataset.nameEditBound) return;
+    cards.dataset.nameEditBound = 'true';
+
+    cards.addEventListener('mousedown', (e) => {
+      if (e.detail < 2) return;
+      if (e.target.closest('button, input, label, .price-change-badge')) return;
+      const row = e.target.closest('.product-row');
+      if (!row) return;
+      e.preventDefault();
+    });
+
+    cards.addEventListener('dblclick', (e) => {
+      if (e.target.closest('button, input, label, .price-change-badge')) return;
+      const row = e.target.closest('.product-row');
+      if (!row) return;
+      const nameEl = row.querySelector('.product-name[data-name-id]');
+      if (!nameEl) return;
+      e.preventDefault();
+      e.stopPropagation();
+      this.startNameEdit(nameEl);
     });
   },
 
+  getActiveFieldEditor() {
+    return document.querySelector('.name-input, .price-input');
+  },
+
   startNameEdit(span) {
-    if (document.querySelector('.name-input, .price-input')) return;
+    const activeEditor = this.getActiveFieldEditor();
+    if (activeEditor?.isConnected) return;
 
     const id = span.dataset.nameId;
     const product = products.find(p => p.id === id);
@@ -588,8 +613,11 @@ const app = {
     });
 
     span.replaceWith(input);
-    input.focus();
-    input.select();
+    requestAnimationFrame(() => {
+      if (!input.isConnected) return;
+      input.focus({ preventScroll: true });
+      input.select();
+    });
   },
 
   startPriceEdit(btn) {

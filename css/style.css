@@ -526,6 +526,8 @@ body {
   border-radius: var(--radius-sm);
   padding: 4px 6px;
   transition: background var(--transition);
+  user-select: none;
+  -webkit-user-select: none;
 }
 .product-name:hover { background: var(--bg-elevated); }
 
@@ -538,6 +540,8 @@ body {
   background: var(--bg);
   color: var(--text);
   font-size: 0.9rem;
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 .price-btn {
