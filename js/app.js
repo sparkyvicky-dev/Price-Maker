@@ -419,7 +419,7 @@ const app = {
     container.querySelectorAll('[data-preview]').forEach(btn => {
       btn.addEventListener('click', () => {
         const brand = btn.dataset.preview;
-        const text = buildBrandMessage(brand, products, { includeHeader: false, includeFooter: false });
+        const text = buildBrandMessage(brand, products);
         showPreviewModal(text, `Preview: ${brand}`);
       });
     });

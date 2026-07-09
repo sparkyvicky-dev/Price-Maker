@@ -170,11 +170,7 @@ export function previewSelected(products, selectedIds, options = {}) {
     showToast('Tick at least one model to preview', 'warning');
     return;
   }
-  const text = buildSelectedMessage(products, selectedIds, {
-    includeHeader: false,
-    includeFooter: false,
-    ...options
-  });
+  const text = buildSelectedMessage(products, selectedIds, options);
   showPreviewModal(text, `Preview Selected (${selectedIds.size})`);
 }
 
