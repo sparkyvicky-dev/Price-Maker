@@ -427,8 +427,13 @@ export function addCustomSection(title = 'New Heading') {
     title: String(title || 'New Heading').trim() || 'New Heading'
   };
   const customSections = [...s.customSections, section];
-  const sectionOrder = [...s.sectionOrder, section.id];
-  saveSettings({ customSections, sectionOrder });
+  const knownIds = new Set(customSections.map(sec => sec.id));
+  const sectionOrder = [
+    ...s.sectionOrder.filter(id => knownIds.has(id) && id !== section.id),
+    section.id
+  ];
+  const collapsedSections = { ...(s.collapsedSections || {}), [section.id]: false };
+  saveSettings({ customSections, sectionOrder, collapsedSections });
   return section;
 }
 

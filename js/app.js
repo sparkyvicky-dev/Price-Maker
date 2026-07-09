@@ -125,7 +125,11 @@ const app = {
       el.addEventListener('blur', () => saveHeaderFooterFromUI());
     });
 
-    document.getElementById('btn-add-heading')?.addEventListener('click', () => this.createCustomHeading());
+    document.getElementById('btn-add-heading')?.addEventListener('click', () => this.openHeadingNameDialog());
+    document.getElementById('heading-name-form')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.submitHeadingNameForm();
+    });
     document.getElementById('move-to-section')?.addEventListener('change', (e) => this.moveSelectedToSection(e.target.value));
 
     document.getElementById('btn-select-all')?.addEventListener('click', () => this.toggleSelectAll());
@@ -388,12 +392,13 @@ const app = {
     const customGroups = groups.filter(g => g.isCustom);
     const brandGroups = groups.filter(g => !g.isCustom);
     container.innerHTML = [
+      ...brandGroups.map(group => this.renderGroupCard(group, s)),
       ...customGroups.map(group => this.renderGroupCard(group, s)),
-      this.renderAddHeadingCard(),
-      ...brandGroups.map(group => this.renderGroupCard(group, s))
+      this.renderAddHeadingCard()
     ].join('');
 
     this.bindBrandCardEvents(container);
+    this.bindInlineAddProductRows(container);
     this.initDragReorder(container);
     this.updateSelectionUI();
   },
@@ -401,24 +406,34 @@ const app = {
   renderAddHeadingCard() {
     return `
       <div class="brand-card add-heading-card" role="listitem">
-        <button type="button" class="btn-add-heading-card" aria-label="Add new heading">
-          <span class="add-card-icon" aria-hidden="true">+</span>
-          <span>Add Heading</span>
-        </button>
+        <form class="add-heading-form" aria-label="Add new heading">
+          <input type="text" class="inline-heading-name form-input" placeholder="New heading name…" aria-label="New heading name">
+          <button type="submit" class="btn btn-sm btn-primary">+ Add Heading</button>
+        </form>
       </div>`;
   },
 
-  renderAddItemRow(context) {
-    const attrs = context.sectionId
-      ? `data-add-item-section="${escapeHtml(context.sectionId)}"`
-      : `data-add-item-brand="${escapeHtml(context.brand)}"`;
-    return `<li class="add-item-row" role="listitem"><button type="button" class="btn-add-item" ${attrs}>+ Add item</button></li>`;
+  renderInlineAddRow(context) {
+    const dataAttrs = context.sectionId
+      ? `data-add-section="${escapeHtml(context.sectionId)}"`
+      : `data-add-brand="${escapeHtml(context.brand)}"`;
+
+    return `
+      <li class="product-row add-product-row" role="listitem" ${dataAttrs}>
+        <span class="add-row-spacer" aria-hidden="true"></span>
+        <input type="text" class="inline-add-name form-input" placeholder="Add product… e.g. iPhone 15 128GB" aria-label="New product name">
+        <span class="add-row-delete-spacer" aria-hidden="true"></span>
+        <div class="add-row-price-col">
+          <input type="number" class="inline-add-price form-input" placeholder="Price" min="0" step="1" aria-label="New product price">
+          <button type="button" class="btn btn-sm btn-primary btn-inline-add-submit">Add</button>
+        </div>
+      </li>`;
   },
 
   renderProductListWithAdd(productList, addContext) {
     const s = loadSettings();
     const rows = productList.map(p => this.renderProductRow(p, s)).join('');
-    const addRow = this.renderAddItemRow(addContext);
+    const addRow = this.renderInlineAddRow(addContext);
     return `<ul class="product-list" role="list">${rows}${addRow}</ul>`;
   },
 
@@ -426,7 +441,7 @@ const app = {
     const s = loadSettings();
     const visible = productList.slice(0, 100);
     const label = addContext.brand || addContext.sectionId || '';
-    const addRow = this.renderAddItemRow(addContext);
+    const addRow = this.renderInlineAddRow(addContext);
     return `
       <ul class="product-list" role="list" data-total="${productList.length}" data-brand="${escapeHtml(label)}">
         ${visible.map(p => this.renderProductRow(p, s)).join('')}
@@ -586,18 +601,19 @@ const app = {
       btn.addEventListener('click', () => this.assignProductsToSection(btn.dataset.sectionId, [...selectedProducts]));
     });
 
-    container.querySelectorAll('.btn-add-item').forEach(btn => {
-      btn.addEventListener('click', () => {
-        if (btn.dataset.addItemSection) {
-          this.promptAddProduct({ sectionId: btn.dataset.addItemSection });
-        } else if (btn.dataset.addItemBrand) {
-          this.promptAddProduct({ brand: btn.dataset.addItemBrand });
+    container.querySelectorAll('.add-heading-form').forEach(form => {
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const input = form.querySelector('.inline-heading-name');
+        const title = input?.value?.trim();
+        if (!title) {
+          showToast('Heading name cannot be empty', 'warning');
+          input?.focus();
+          return;
         }
+        this.createCustomHeading(title);
+        if (input) input.value = '';
       });
-    });
-
-    container.querySelectorAll('.btn-add-heading-card').forEach(btn => {
-      btn.addEventListener('click', () => this.createCustomHeading());
     });
 
     container.querySelectorAll('[data-delete-section]').forEach(btn => {
@@ -669,14 +685,14 @@ const app = {
 
     cards.addEventListener('mousedown', (e) => {
       if (e.detail < 2) return;
-      if (e.target.closest('button, input, label, .price-change-badge, .section-name, .btn-delete-product')) return;
+      if (e.target.closest('button, input, label, .price-change-badge, .section-name, .btn-delete-product, .add-product-row')) return;
       const row = e.target.closest('.product-row');
       if (!row) return;
       e.preventDefault();
     });
 
     cards.addEventListener('dblclick', (e) => {
-      if (e.target.closest('button, input, label, .price-change-badge, .section-name, .btn-delete-product')) return;
+      if (e.target.closest('button, input, label, .price-change-badge, .section-name, .btn-delete-product, .add-product-row')) return;
       const row = e.target.closest('.product-row');
       if (!row) return;
       const nameEl = row.querySelector('.product-name[data-name-id]');
@@ -687,35 +703,79 @@ const app = {
     });
   },
 
-  createCustomHeading() {
-    const title = window.prompt('Heading name:');
-    if (title == null) return;
-    const trimmed = title.trim();
+  bindInlineAddProductRows(container) {
+    container.querySelectorAll('.add-product-row').forEach(row => {
+      const nameInput = row.querySelector('.inline-add-name');
+      const priceInput = row.querySelector('.inline-add-price');
+      const submitBtn = row.querySelector('.btn-inline-add-submit');
+      if (!nameInput || !submitBtn) return;
+
+      const submit = async () => {
+        const name = nameInput.value.trim();
+        if (!name) {
+          showToast('Enter a product name', 'warning');
+          nameInput.focus();
+          return;
+        }
+
+        const price = priceInput?.value?.trim() ? parsePrice(priceInput.value) : 0;
+        const sectionId = row.dataset.addSection || undefined;
+        const brand = row.dataset.addBrand || undefined;
+
+        await this.addProductRecord({ name, price, sectionId, brand });
+
+        nameInput.value = '';
+        if (priceInput) priceInput.value = '';
+        nameInput.focus();
+      };
+
+      submitBtn.addEventListener('click', submit);
+      nameInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); submit(); }
+      });
+      priceInput?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); submit(); }
+      });
+      nameInput.addEventListener('mousedown', (e) => e.stopPropagation());
+      priceInput?.addEventListener('mousedown', (e) => e.stopPropagation());
+    });
+  },
+
+  openHeadingNameDialog() {
+    const dialog = document.getElementById('heading-name-dialog');
+    const input = document.getElementById('heading-name-input');
+    if (!dialog) return;
+    if (input) input.value = '';
+    dialog.showModal();
+    requestAnimationFrame(() => input?.focus());
+  },
+
+  submitHeadingNameForm() {
+    const input = document.getElementById('heading-name-input');
+    const title = input?.value?.trim();
+    if (!title) {
+      showToast('Heading name cannot be empty', 'warning');
+      input?.focus();
+      return;
+    }
+    document.getElementById('heading-name-dialog')?.close();
+    this.createCustomHeading(title);
+  },
+
+  createCustomHeading(title) {
+    const trimmed = String(title || '').trim();
     if (!trimmed) {
       showToast('Heading name cannot be empty', 'warning');
       return;
     }
 
-    addCustomSection(trimmed);
+    const section = addCustomSection(trimmed);
     this.renderBrandCards();
     showToast(`Heading "${trimmed}" created`, 'success');
-  },
-
-  async promptAddProduct({ sectionId, brand } = {}) {
-    const name = window.prompt('Product name (e.g. T4 Lite 4GB/64GB):');
-    if (name == null) return;
-
-    const trimmed = name.trim();
-    if (!trimmed) {
-      showToast('Product name cannot be empty', 'warning');
-      return;
-    }
-
-    const priceInput = window.prompt('Price (optional — leave empty to skip):');
-    if (priceInput == null) return;
-    const price = priceInput.trim() ? parsePrice(priceInput) : 0;
-
-    await this.addProductRecord({ name: trimmed, price, sectionId, brand });
+    requestAnimationFrame(() => {
+      document.querySelector(`.custom-section-card[data-section-id="${section.id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      document.querySelector(`.custom-section-card[data-section-id="${section.id}"] .inline-add-name`)?.focus();
+    });
   },
 
   async addProductRecord({ name, price = 0, sectionId, brand }) {

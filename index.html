@@ -317,6 +317,23 @@
     </div>
   </dialog>
 
+  <!-- Heading Name Modal -->
+  <dialog id="heading-name-dialog" class="modal" aria-labelledby="heading-name-title">
+    <form id="heading-name-form" class="bulk-edit-form">
+      <div class="modal-header">
+        <h2 id="heading-name-title">New Heading</h2>
+        <button type="button" class="modal-close" data-close-modal aria-label="Close">&times;</button>
+      </div>
+      <label>Heading name
+        <input type="text" id="heading-name-input" class="form-input" placeholder="e.g. Smart TV, Accessories…" required aria-label="Heading name">
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" data-close-modal>Cancel</button>
+        <button type="submit" class="btn btn-primary">Create Heading</button>
+      </div>
+    </form>
+  </dialog>
+
   <!-- Bulk Edit Modal -->
   <dialog id="bulk-edit-modal" class="modal" aria-labelledby="bulk-edit-title">
     <div class="modal-header">
