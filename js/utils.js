@@ -52,19 +52,28 @@ export function parsePrice(value) {
 }
 
 /**
- * Format price with currency
+ * Whether a product has a usable price
+ */
+export function hasProductPrice(price) {
+  return parsePrice(price) > 0;
+}
+
+/**
+ * Format price with currency — returns empty string when price is cleared/zero
  */
 export function formatPrice(price, currency = '₹') {
   const num = parsePrice(price);
+  if (num <= 0) return '';
   if (currency === '₹') return `₹${num.toLocaleString('en-IN')}`;
   return `Rs.${num.toLocaleString('en-IN')}`;
 }
 
 /**
- * Format price for WhatsApp (Rs. style)
+ * Format price for WhatsApp (Rs. style) — empty when no price
  */
 export function formatPriceWhatsApp(price, currency = '₹') {
   const num = parsePrice(price);
+  if (num <= 0) return '';
   if (currency === '₹' || currency === 'Rs') return `Rs.${num}`;
   return `${currency}.${num}`;
 }
@@ -273,7 +282,8 @@ export function productDisplayName(product) {
  */
 export function formatProductCopyLine(product, currency = '₹') {
   const name = productDisplayName(product);
-  const priceStr = formatPriceWhatsApp(parsePrice(product.price), currency);
+  const priceStr = formatPriceWhatsApp(product.price, currency);
+  if (!priceStr) return name;
   return `${name} · *${priceStr}*`;
 }
 

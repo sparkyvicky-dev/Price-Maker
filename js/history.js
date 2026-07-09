@@ -130,7 +130,7 @@ export async function showSnapshotDetail(snapshot, containerId = 'snapshot-detai
           <h4>${escapeHtml(g.brand)}</h4>
           <ul>
             ${g.products.map(p => `
-              <li>${escapeHtml(productDisplayName(p))} — ${formatPrice(p.price, s.currency)}</li>
+              <li>${escapeHtml(productDisplayName(p))}${formatPrice(p.price, s.currency) ? ` — ${formatPrice(p.price, s.currency)}` : ''}</li>
             `).join('')}
           </ul>
         </div>

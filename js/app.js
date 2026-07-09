@@ -4,7 +4,7 @@
 
 import {
   debounce, generateId, groupByBrand, sortProducts, productDisplayName,
-  formatPrice, parsePrice, parseProductDisplayEdit, showToast, showLoading, escapeHtml, getVisibleSlice, todayKey
+  formatPrice, parsePrice, parseProductDisplayEdit, showToast, showLoading, escapeHtml, getVisibleSlice, todayKey, hasProductPrice
 } from './utils.js';
 
 import {
@@ -268,7 +268,7 @@ const app = {
   },
 
   formatPriceLabel(price, currency) {
-    return price > 0 ? formatPrice(price, currency) : '—';
+    return formatPrice(price, currency);
   },
 
   async updateStats() {
@@ -405,8 +405,8 @@ const app = {
           <span class="checkmark" aria-hidden="true">✓</span>
         </label>
         <span class="product-name" data-name-id="${p.id}" title="Double-click to edit name">${escapeHtml(displayName)}</span>
-        <button class="price-btn ${p.price === 0 ? 'price-empty' : ''}" data-price-id="${p.id}" aria-label="Edit price for ${escapeHtml(displayName)}">${this.formatPriceLabel(p.price, s.currency)}</button>
-        ${changed ? `<span class="price-change-badge" title="Was ${formatPrice(p.previousPrice, s.currency)}">${p.price > p.previousPrice ? '▲' : '▼'}</span>` : ''}
+        <button class="price-btn ${p.price === 0 ? 'price-empty' : ''}" data-price-id="${p.id}" aria-label="${hasProductPrice(p.price) ? `Edit price for ${escapeHtml(displayName)}` : `Add price for ${escapeHtml(displayName)}`}">${this.formatPriceLabel(p.price, s.currency)}</button>
+        ${changed && hasProductPrice(p.previousPrice) ? `<span class="price-change-badge" title="Was ${formatPrice(p.previousPrice, s.currency)}">${p.price > p.previousPrice ? '▲' : '▼'}</span>` : ''}
       </li>
     `;
   },
@@ -584,7 +584,7 @@ const app = {
     const input = document.createElement('input');
     input.type = 'number';
     input.className = 'price-input';
-    input.value = product.price;
+    input.value = hasProductPrice(product.price) ? product.price : '';
     input.min = 0;
     input.setAttribute('aria-label', 'Edit price');
 
@@ -640,9 +640,10 @@ const app = {
 
     section.classList.remove('hidden');
     const s = loadSettings();
-    list.innerHTML = recentlyEdited.map(p => `
-      <li>${escapeHtml(productDisplayName(p))} — ${formatPrice(p.price, s.currency)}</li>
-    `).join('');
+    list.innerHTML = recentlyEdited.map(p => {
+      const priceLabel = formatPrice(p.price, s.currency);
+      return `<li>${escapeHtml(productDisplayName(p))}${priceLabel ? ` — ${priceLabel}` : ''}</li>`;
+    }).join('');
   },
 
   checkPriceAlert(product) {
