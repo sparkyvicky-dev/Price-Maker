@@ -1,82 +1,124 @@
 @echo off
 title Price Maker Setup
-setlocal EnableDelayedExpansion
+setlocal EnableExtensions
 
 set "REPO_DIR=%~dp0"
 set "REPO_DIR=%REPO_DIR:~0,-1%"
-set "DESKTOP=%USERPROFILE%\Desktop"
-set "LAUNCHER=%DESKTOP%\price maker.bat"
 set "PORT=8080"
+set "LAUNCHER_NAME=price maker.bat"
 
 if not exist "%REPO_DIR%\index.html" (
     echo.
-    echo  This setup file must stay inside the Price Maker project folder.
+    echo  Run this file from inside your Price Maker project folder.
     echo.
     pause
     exit /b 1
 )
 
-echo.
-echo  Installing desktop launcher...
-echo  Project: %REPO_DIR%
-echo  Desktop: %LAUNCHER%
-echo.
-
-(
-echo @echo off
-echo title Price Maker
-echo setlocal
-echo.
-echo set "APP_DIR=%REPO_DIR%"
-echo set "PORT=%PORT%"
-echo.
-echo if not exist "%%APP_DIR%%\index.html" ^(
-echo     echo.
-echo     echo  Price Maker folder not found at:
-echo     echo  %%APP_DIR%%
-echo     echo.
-echo     echo  Run setup.bat again from your project folder.
-echo     echo.
-echo     pause
-echo     exit /b 1
-echo ^)
-echo.
-echo cd /d "%%APP_DIR%%"
-echo.
-echo where py ^>nul 2^>^&1
-echo if %%errorlevel%%==0 ^(
-echo     set "PY=py"
-echo ^) else ^(
-echo     set "PY=python"
-echo ^)
-echo.
-echo echo.
-echo echo  Starting Price Maker...
-echo echo  Open: http://localhost:%%PORT%%
-echo echo  Close this window to stop the app.
-echo echo.
-echo.
-echo start "" "http://localhost:%%PORT%%"
-echo %%PY%% -m http.server %%PORT%%
-echo.
-echo pause
-) > "%LAUNCHER%"
-
-if not exist "%LAUNCHER%" (
-    echo  Failed to create desktop launcher.
+call :FindDesktop
+if not defined DESKTOP (
+    echo.
+    echo  Could not find your Desktop folder.
+    echo  Create a Desktop folder or sign in to Windows, then try again.
+    echo.
     pause
     exit /b 1
 )
 
-echo  Done! "price maker.bat" is now on your Desktop.
+set "LAUNCHER=%DESKTOP%\%LAUNCHER_NAME%"
+
 echo.
-echo  Double-click it anytime to start the app.
+echo  Installing desktop launcher...
+echo  Project : %REPO_DIR%
+echo  Desktop : %DESKTOP%
+echo  Launcher: %LAUNCHER%
 echo.
 
-choice /C YN /M "Start Price Maker now"
-if errorlevel 2 goto :end
-if errorlevel 1 start "" "%LAUNCHER%"
+call :WriteLauncher
 
-:end
+if not exist "%LAUNCHER%" (
+    echo.
+    echo  Failed to create the desktop launcher.
+    echo  Try running setup.bat as Administrator, or check Desktop permissions.
+    echo.
+    pause
+    exit /b 1
+)
+
+echo  Done! "%LAUNCHER_NAME%" is on your Desktop.
+echo  Double-click it anytime to start Price Maker.
+echo.
+
+set /p START_NOW="Start Price Maker now? (Y/N): "
+if /I "%START_NOW%"=="Y" start "" "%LAUNCHER%"
+
 echo.
 pause
+exit /b 0
+
+:FindDesktop
+set "DESKTOP="
+
+rem Best option on modern Windows (OneDrive Desktop, localized names, etc.)
+for /f "usebackq delims=" %%D in (`powershell -NoProfile -Command "[Environment]::GetFolderPath('Desktop')" 2^>nul`) do set "DESKTOP=%%D"
+
+if defined DESKTOP if exist "%DESKTOP%\" exit /b 0
+
+if exist "%USERPROFILE%\Desktop\" (
+    set "DESKTOP=%USERPROFILE%\Desktop"
+    exit /b 0
+)
+
+if exist "%USERPROFILE%\OneDrive\Desktop\" (
+    set "DESKTOP=%USERPROFILE%\OneDrive\Desktop"
+    exit /b 0
+)
+
+if exist "%USERPROFILE%\OneDrive - Personal\Desktop\" (
+    set "DESKTOP=%USERPROFILE%\OneDrive - Personal\Desktop"
+    exit /b 0
+)
+
+exit /b 0
+
+:WriteLauncher
+if exist "%LAUNCHER%" del /f /q "%LAUNCHER%" >nul 2>&1
+
+> "%LAUNCHER%" echo @echo off
+>> "%LAUNCHER%" echo title Price Maker
+>> "%LAUNCHER%" echo setlocal
+>> "%LAUNCHER%" echo.
+>> "%LAUNCHER%" echo set "APP_DIR=%REPO_DIR%"
+>> "%LAUNCHER%" echo set "PORT=%PORT%"
+>> "%LAUNCHER%" echo.
+>> "%LAUNCHER%" echo if not exist "%%APP_DIR%%\index.html" ^(
+>> "%LAUNCHER%" echo     echo.
+>> "%LAUNCHER%" echo     echo  Price Maker folder not found at:
+>> "%LAUNCHER%" echo     echo  %%APP_DIR%%
+>> "%LAUNCHER%" echo     echo.
+>> "%LAUNCHER%" echo     echo  Run setup.bat again from your project folder.
+>> "%LAUNCHER%" echo     echo.
+>> "%LAUNCHER%" echo     pause
+>> "%LAUNCHER%" echo     exit /b 1
+>> "%LAUNCHER%" echo ^)
+>> "%LAUNCHER%" echo.
+>> "%LAUNCHER%" echo cd /d "%%APP_DIR%%"
+>> "%LAUNCHER%" echo.
+>> "%LAUNCHER%" echo where py ^>nul 2^>^&1
+>> "%LAUNCHER%" echo if %%errorlevel%%==0 ^(
+>> "%LAUNCHER%" echo     set "PY=py"
+>> "%LAUNCHER%" echo ^) else ^(
+>> "%LAUNCHER%" echo     set "PY=python"
+>> "%LAUNCHER%" echo ^)
+>> "%LAUNCHER%" echo.
+>> "%LAUNCHER%" echo echo.
+>> "%LAUNCHER%" echo echo  Starting Price Maker...
+>> "%LAUNCHER%" echo echo  Open: http://localhost:%%PORT%%
+>> "%LAUNCHER%" echo echo  Close this window to stop the app.
+>> "%LAUNCHER%" echo echo.
+>> "%LAUNCHER%" echo.
+>> "%LAUNCHER%" echo start "" "http://localhost:%%PORT%%"
+>> "%LAUNCHER%" echo %%PY%% -m http.server %%PORT%%
+>> "%LAUNCHER%" echo.
+>> "%LAUNCHER%" echo pause
+exit /b 0
