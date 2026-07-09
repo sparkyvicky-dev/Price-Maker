@@ -501,6 +501,78 @@ body {
   border-left: 3px solid var(--primary);
 }
 
+.add-heading-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 72px;
+  border: 2px dashed var(--border);
+  background: transparent;
+  box-shadow: none;
+}
+
+.btn-add-heading-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 18px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: var(--radius);
+  transition: color var(--transition), background var(--transition);
+}
+
+.btn-add-heading-card:hover {
+  color: var(--primary-light);
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.add-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.add-item-row {
+  border-bottom: none;
+  padding: 12px 18px 16px;
+}
+
+.btn-add-item {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color var(--transition), border-color var(--transition), background var(--transition);
+}
+
+.btn-add-item:hover {
+  color: var(--primary-light);
+  border-color: var(--primary);
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.product-list:only-child .add-item-row:first-child:last-child {
+  padding-top: 16px;
+}
+
 .move-to-section {
   min-width: 160px;
   max-width: 220px;

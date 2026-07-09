@@ -18,7 +18,7 @@ import {
   saveHeaderFooterFromUI, toggleFavoriteBrand, updateBrandOrder,
   toggleBrandCollapsed, populateSettingsForm, readSettingsForm, applyTheme, getTodayFormatted,
   initTemplateControls, addCustomSection, updateCustomSectionTitle, deleteCustomSection,
-  toggleSectionCollapsed
+  toggleSectionCollapsed, updateSectionOrder
 } from './settings.js';
 
 import { parseExcelFile } from './excel.js';
@@ -126,12 +126,7 @@ const app = {
     });
 
     document.getElementById('btn-add-heading')?.addEventListener('click', () => this.createCustomHeading());
-    document.getElementById('btn-add-product')?.addEventListener('click', () => this.openAddProductModal());
     document.getElementById('move-to-section')?.addEventListener('change', (e) => this.moveSelectedToSection(e.target.value));
-    document.getElementById('add-product-form')?.addEventListener('submit', (e) => {
-      e.preventDefault();
-      this.submitAddProductForm();
-    });
 
     document.getElementById('btn-select-all')?.addEventListener('click', () => this.toggleSelectAll());
     document.getElementById('btn-clear-prices')?.addEventListener('click', () => this.clearPrices());
@@ -367,8 +362,9 @@ const app = {
 
     const filtered = this.getFilteredProducts();
     const s = loadSettings();
+    const hasCustomSections = (s.customSections || []).length > 0;
 
-    if (!products.length) {
+    if (!products.length && !hasCustomSections) {
       container.innerHTML = '';
       empty?.classList.remove('hidden');
       if (empty) empty.querySelector('p').textContent = '📱 No products yet. Upload an Excel or PDF file to get started.';
@@ -389,11 +385,55 @@ const app = {
 
     empty?.classList.add('hidden');
 
-    container.innerHTML = groups.map(group => this.renderGroupCard(group, s)).join('');
+    const customGroups = groups.filter(g => g.isCustom);
+    const brandGroups = groups.filter(g => !g.isCustom);
+    container.innerHTML = [
+      ...customGroups.map(group => this.renderGroupCard(group, s)),
+      this.renderAddHeadingCard(),
+      ...brandGroups.map(group => this.renderGroupCard(group, s))
+    ].join('');
 
     this.bindBrandCardEvents(container);
     this.initDragReorder(container);
     this.updateSelectionUI();
+  },
+
+  renderAddHeadingCard() {
+    return `
+      <div class="brand-card add-heading-card" role="listitem">
+        <button type="button" class="btn-add-heading-card" aria-label="Add new heading">
+          <span class="add-card-icon" aria-hidden="true">+</span>
+          <span>Add Heading</span>
+        </button>
+      </div>`;
+  },
+
+  renderAddItemRow(context) {
+    const attrs = context.sectionId
+      ? `data-add-item-section="${escapeHtml(context.sectionId)}"`
+      : `data-add-item-brand="${escapeHtml(context.brand)}"`;
+    return `<li class="add-item-row" role="listitem"><button type="button" class="btn-add-item" ${attrs}>+ Add item</button></li>`;
+  },
+
+  renderProductListWithAdd(productList, addContext) {
+    const s = loadSettings();
+    const rows = productList.map(p => this.renderProductRow(p, s)).join('');
+    const addRow = this.renderAddItemRow(addContext);
+    return `<ul class="product-list" role="list">${rows}${addRow}</ul>`;
+  },
+
+  renderVirtualProductListWithAdd(productList, addContext) {
+    const s = loadSettings();
+    const visible = productList.slice(0, 100);
+    const label = addContext.brand || addContext.sectionId || '';
+    const addRow = this.renderAddItemRow(addContext);
+    return `
+      <ul class="product-list" role="list" data-total="${productList.length}" data-brand="${escapeHtml(label)}">
+        ${visible.map(p => this.renderProductRow(p, s)).join('')}
+        ${productList.length > 100 ? `<li class="product-more">... and ${productList.length - 100} more (use search to narrow)</li>` : ''}
+        ${addRow}
+      </ul>
+    `;
   },
 
   renderGroupCard(group, s) {
@@ -403,10 +443,16 @@ const app = {
     const count = sorted.length;
 
     if (group.isCustom) {
+      const addContext = { sectionId: group.sectionId };
+      const listHtml = useVirtual
+        ? this.renderVirtualProductListWithAdd(sorted, addContext)
+        : this.renderProductListWithAdd(sorted, addContext);
+
       return `
         <div class="brand-card custom-section-card ${collapsed ? 'collapsed' : ''}" data-section-id="${escapeHtml(group.sectionId)}" role="listitem">
           <div class="brand-card-header">
             <div class="brand-title-row">
+              <span class="drag-handle" draggable="true" title="Drag to reorder heading" aria-label="Drag to reorder ${escapeHtml(group.title)}">⠿</span>
               <h3 class="section-name" data-section-title="${escapeHtml(group.sectionId)}" title="Double-click to rename heading">${escapeHtml(group.title)}</h3>
               <span class="brand-count">${count}</span>
               <button class="btn-icon btn-delete-section" data-delete-section="${escapeHtml(group.sectionId)}" aria-label="Delete heading ${escapeHtml(group.title)}" title="Delete heading">🗑</button>
@@ -414,14 +460,13 @@ const app = {
             <div class="brand-actions">
               <button class="btn btn-sm btn-secondary btn-select-group" data-group-key="${escapeHtml(group.sectionId)}" data-group-type="section" aria-label="Select all in ${escapeHtml(group.title)}">Select All</button>
               <button class="btn btn-sm btn-secondary btn-add-to-section" data-section-id="${escapeHtml(group.sectionId)}" aria-label="Add selected to ${escapeHtml(group.title)}">Add Selected</button>
-              <button class="btn btn-sm btn-secondary btn-add-product-inline" data-section-id="${escapeHtml(group.sectionId)}" aria-label="Add product to ${escapeHtml(group.title)}">+ Product</button>
               <button class="btn btn-sm btn-secondary" data-preview-section="${escapeHtml(group.sectionId)}" aria-label="Preview ${escapeHtml(group.title)}">Preview</button>
               <button class="btn btn-sm btn-primary" data-copy-section="${escapeHtml(group.sectionId)}" aria-label="Copy ${escapeHtml(group.title)}">Copy</button>
               <button class="btn btn-sm btn-secondary collapse-btn" data-collapse-section="${escapeHtml(group.sectionId)}" aria-label="${collapsed ? 'Expand' : 'Collapse'} ${escapeHtml(group.title)}">${collapsed ? 'Expand' : 'Collapse'}</button>
             </div>
           </div>
           <div class="brand-products ${useVirtual ? 'virtual-scroll' : ''}" ${useVirtual ? 'style="max-height:400px;overflow-y:auto"' : ''}>
-            ${count ? (useVirtual ? this.renderVirtualProductList(sorted, group.title) : this.renderProductList(sorted)) : '<p class="empty-message">No products yet. Select models and click Add Selected, or use + Product.</p>'}
+            ${listHtml}
           </div>
         </div>
       `;
@@ -447,25 +492,9 @@ const app = {
           </div>
         </div>
         <div class="brand-products ${useVirtual ? 'virtual-scroll' : ''}" data-brand-products="${escapeHtml(brand)}" ${useVirtual ? `style="max-height:400px;overflow-y:auto"` : ''}>
-          ${useVirtual ? this.renderVirtualProductList(sorted, brand) : this.renderProductList(sorted)}
+          ${useVirtual ? this.renderVirtualProductListWithAdd(sorted, { brand }) : this.renderProductListWithAdd(sorted, { brand })}
         </div>
       </div>
-    `;
-  },
-
-  renderProductList(productList) {
-    const s = loadSettings();
-    return `<ul class="product-list" role="list">${productList.map(p => this.renderProductRow(p, s)).join('')}</ul>`;
-  },
-
-  renderVirtualProductList(productList, brand) {
-    const s = loadSettings();
-    const visible = productList.slice(0, 100);
-    return `
-      <ul class="product-list" role="list" data-total="${productList.length}" data-brand="${escapeHtml(brand)}">
-        ${visible.map(p => this.renderProductRow(p, s)).join('')}
-        ${productList.length > 100 ? `<li class="product-more">... and ${productList.length - 100} more (use search to narrow)</li>` : ''}
-      </ul>
     `;
   },
 
@@ -557,8 +586,18 @@ const app = {
       btn.addEventListener('click', () => this.assignProductsToSection(btn.dataset.sectionId, [...selectedProducts]));
     });
 
-    container.querySelectorAll('.btn-add-product-inline').forEach(btn => {
-      btn.addEventListener('click', () => this.openAddProductModal(btn.dataset.sectionId));
+    container.querySelectorAll('.btn-add-item').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.dataset.addItemSection) {
+          this.promptAddProduct({ sectionId: btn.dataset.addItemSection });
+        } else if (btn.dataset.addItemBrand) {
+          this.promptAddProduct({ brand: btn.dataset.addItemBrand });
+        }
+      });
+    });
+
+    container.querySelectorAll('.btn-add-heading-card').forEach(btn => {
+      btn.addEventListener('click', () => this.createCustomHeading());
     });
 
     container.querySelectorAll('[data-delete-section]').forEach(btn => {
@@ -649,13 +688,61 @@ const app = {
   },
 
   createCustomHeading() {
-    const section = addCustomSection('New Heading');
+    const title = window.prompt('Heading name:');
+    if (title == null) return;
+    const trimmed = title.trim();
+    if (!trimmed) {
+      showToast('Heading name cannot be empty', 'warning');
+      return;
+    }
+
+    addCustomSection(trimmed);
     this.renderBrandCards();
-    showToast('Custom heading added — double-click title to rename', 'success');
-    requestAnimationFrame(() => {
-      const titleEl = document.querySelector(`.section-name[data-section-title="${section.id}"]`);
-      if (titleEl) this.startSectionTitleEdit(titleEl);
-    });
+    showToast(`Heading "${trimmed}" created`, 'success');
+  },
+
+  async promptAddProduct({ sectionId, brand } = {}) {
+    const name = window.prompt('Product name (e.g. T4 Lite 4GB/64GB):');
+    if (name == null) return;
+
+    const trimmed = name.trim();
+    if (!trimmed) {
+      showToast('Product name cannot be empty', 'warning');
+      return;
+    }
+
+    const priceInput = window.prompt('Price (optional — leave empty to skip):');
+    if (priceInput == null) return;
+    const price = priceInput.trim() ? parsePrice(priceInput) : 0;
+
+    await this.addProductRecord({ name: trimmed, price, sectionId, brand });
+  },
+
+  async addProductRecord({ name, price = 0, sectionId, brand }) {
+    const defaultBrand = brand || 'Other';
+    const parsed = parseProductDisplayEdit(name, defaultBrand);
+    if (!parsed?.model) {
+      showToast('Could not parse name. Try: Model Name 8GB/256GB', 'error');
+      return;
+    }
+
+    const product = {
+      id: generateId(),
+      brand: brand || parsed.brand || 'Other',
+      model: parsed.model,
+      ram: parsed.ram || '',
+      storage: parsed.storage || '',
+      price: price || 0,
+      previousPrice: null,
+      updatedAt: Date.now()
+    };
+
+    if (sectionId) product.sectionId = sectionId;
+
+    products.push(product);
+    await updateProduct(product);
+    await this.refreshDashboard();
+    showToast('Product added', 'success');
   },
 
   async assignProductsToSection(sectionId, ids = []) {
@@ -707,64 +794,6 @@ const app = {
     }
 
     if (select) select.value = '';
-  },
-
-  openAddProductModal(sectionId = '') {
-    const modal = document.getElementById('add-product-modal');
-    const select = document.getElementById('add-product-section');
-    const s = loadSettings();
-
-    if (select) {
-      select.innerHTML = s.customSections.map(sec =>
-        `<option value="${escapeHtml(sec.id)}">${escapeHtml(sec.title)}</option>`
-      ).join('') || '<option value="">Create a heading first</option>';
-      select.value = sectionId || s.customSections[0]?.id || '';
-      select.disabled = !s.customSections.length;
-    }
-
-    document.getElementById('add-product-name').value = '';
-    document.getElementById('add-product-price').value = '';
-    modal?.showModal();
-  },
-
-  async submitAddProductForm() {
-    const sectionId = document.getElementById('add-product-section')?.value;
-    const name = document.getElementById('add-product-name')?.value?.trim();
-    const price = parsePrice(document.getElementById('add-product-price')?.value);
-
-    if (!sectionId) {
-      showToast('Create a custom heading first', 'warning');
-      return;
-    }
-
-    if (!name) {
-      showToast('Enter a product name', 'warning');
-      return;
-    }
-
-    const parsed = parseProductDisplayEdit(name, 'Other');
-    if (!parsed?.model) {
-      showToast('Could not parse name. Try: Model Name 8GB/256GB', 'error');
-      return;
-    }
-
-    const product = {
-      id: generateId(),
-      brand: 'Other',
-      model: parsed.model,
-      ram: parsed.ram || '',
-      storage: parsed.storage || '',
-      price: price || 0,
-      previousPrice: null,
-      sectionId,
-      updatedAt: Date.now()
-    };
-
-    products.push(product);
-    await updateProduct(product);
-    document.getElementById('add-product-modal')?.close();
-    await this.refreshDashboard();
-    showToast('Product added', 'success');
   },
 
   async deleteProductById(id) {
@@ -1028,13 +1057,61 @@ const app = {
 
   initDragReorder(container) {
     let dragBrand = null;
+    let dragSectionId = null;
 
-    container.querySelectorAll('.brand-card').forEach(card => {
+    container.querySelectorAll('.custom-section-card').forEach(card => {
+      const handle = card.querySelector('.drag-handle');
+      if (!handle) return;
+
+      handle.addEventListener('dragstart', (e) => {
+        dragSectionId = card.dataset.sectionId;
+        dragBrand = null;
+        card.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', dragSectionId);
+      });
+
+      handle.addEventListener('dragend', () => {
+        card.classList.remove('dragging');
+        dragSectionId = null;
+      });
+
+      card.addEventListener('dragover', (e) => {
+        if (!dragSectionId) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+      });
+
+      card.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const targetId = card.dataset.sectionId;
+        if (!dragSectionId || dragSectionId === targetId) return;
+
+        const s = loadSettings();
+        const order = [...s.sectionOrder];
+        for (const sec of s.customSections) {
+          if (!order.includes(sec.id)) order.push(sec.id);
+        }
+
+        const fromIdx = order.indexOf(dragSectionId);
+        const toIdx = order.indexOf(targetId);
+        if (fromIdx < 0 || toIdx < 0) return;
+
+        order.splice(fromIdx, 1);
+        order.splice(toIdx, 0, dragSectionId);
+        updateSectionOrder(order);
+        dragSectionId = null;
+        this.renderBrandCards();
+      });
+    });
+
+    container.querySelectorAll('.brand-card[data-brand]').forEach(card => {
       const handle = card.querySelector('.drag-handle');
       if (!handle) return;
 
       handle.addEventListener('dragstart', (e) => {
         dragBrand = card.dataset.brand;
+        dragSectionId = null;
         card.classList.add('dragging');
         e.dataTransfer.effectAllowed = 'move';
         e.dataTransfer.setData('text/plain', dragBrand);
@@ -1046,6 +1123,7 @@ const app = {
       });
 
       card.addEventListener('dragover', (e) => {
+        if (!dragBrand) return;
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
       });
@@ -1064,6 +1142,7 @@ const app = {
         brands.splice(fromIdx, 1);
         brands.splice(toIdx, 0, dragBrand);
         updateBrandOrder(brands);
+        dragBrand = null;
         this.renderBrandCards();
       });
     });
