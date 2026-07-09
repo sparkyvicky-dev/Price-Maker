@@ -451,7 +451,15 @@ body {
   gap: 10px;
 }
 .brand-title-row { display: flex; align-items: center; gap: 8px; }
-.drag-handle { cursor: grab; color: var(--text-muted); user-select: none; }
+.drag-handle {
+  cursor: grab;
+  color: var(--text-muted);
+  user-select: none;
+  -webkit-user-drag: element;
+  touch-action: none;
+  padding: 2px 4px;
+}
+.drag-handle:active { cursor: grabbing; }
 .brand-name { font-size: 1.1rem; font-weight: 700; color: var(--primary-light); }
 .brand-count {
   background: var(--primary);
@@ -542,7 +550,9 @@ body {
   font-size: 0.9rem;
   user-select: text;
   -webkit-user-select: text;
+  -webkit-user-drag: none;
 }
+
 
 .price-btn {
   background: var(--bg);
@@ -576,6 +586,9 @@ body {
   font-size: 0.9rem;
   font-weight: 600;
   text-align: right;
+  user-select: text;
+  -webkit-user-select: text;
+  -webkit-user-drag: none;
 }
 
 .price-increased { border-left: 3px solid var(--increase); }

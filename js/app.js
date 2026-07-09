@@ -365,10 +365,10 @@ const app = {
       const useVirtual = sorted.length > VIRTUAL_THRESHOLD;
 
       return `
-        <div class="brand-card ${collapsed ? 'collapsed' : ''}" data-brand="${escapeHtml(brand)}" role="listitem" draggable="true">
+        <div class="brand-card ${collapsed ? 'collapsed' : ''}" data-brand="${escapeHtml(brand)}" role="listitem">
           <div class="brand-card-header">
             <div class="brand-title-row">
-              <span class="drag-handle" aria-hidden="true">⠿</span>
+              <span class="drag-handle" draggable="true" title="Drag to reorder brand" aria-label="Drag to reorder ${escapeHtml(brand)}">⠿</span>
               <h3 class="brand-name">${escapeHtml(brand)}</h3>
               <span class="brand-count">${sorted.length}</span>
               <button class="btn-icon favorite-btn ${isFavorite ? 'active' : ''}" data-fav="${escapeHtml(brand)}" aria-label="${isFavorite ? 'Remove from favorites' : 'Add to favorites'}" title="Favorite">★</button>
@@ -596,6 +596,9 @@ const app = {
       if (!cancelled) save();
     });
 
+    input.addEventListener('mousedown', (e) => e.stopPropagation());
+    input.addEventListener('dragstart', (e) => e.preventDefault());
+
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
@@ -650,6 +653,8 @@ const app = {
     };
 
     input.addEventListener('blur', save);
+    input.addEventListener('mousedown', (e) => e.stopPropagation());
+    input.addEventListener('dragstart', (e) => e.preventDefault());
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
       if (e.key === 'Escape') {
@@ -701,13 +706,17 @@ const app = {
     let dragBrand = null;
 
     container.querySelectorAll('.brand-card').forEach(card => {
-      card.addEventListener('dragstart', (e) => {
+      const handle = card.querySelector('.drag-handle');
+      if (!handle) return;
+
+      handle.addEventListener('dragstart', (e) => {
         dragBrand = card.dataset.brand;
         card.classList.add('dragging');
         e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', dragBrand);
       });
 
-      card.addEventListener('dragend', () => {
+      handle.addEventListener('dragend', () => {
         card.classList.remove('dragging');
         dragBrand = null;
       });
