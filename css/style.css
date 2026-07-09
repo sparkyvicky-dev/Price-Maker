@@ -501,28 +501,45 @@ body {
   border-left: 3px solid var(--primary);
 }
 
-.add-heading-card {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 72px;
-  border: 2px dashed var(--border);
+.add-heading-card.custom-section-card .brand-card-header {
+  border-left: 3px solid var(--primary);
+}
+
+.add-heading-title {
+  cursor: default;
+}
+
+.add-heading-title:hover {
   background: transparent;
-  box-shadow: none;
-  padding: 14px 18px;
+}
+
+.drag-handle-inert {
+  opacity: 0.35;
+  cursor: default;
+  pointer-events: none;
+}
+
+.heading-spacer {
+  flex: 1;
+}
+
+.add-heading-row {
+  background: rgba(37, 99, 235, 0.05);
+  border-bottom: none;
+}
+
+.add-heading-row .inline-heading-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.95rem;
 }
 
 .add-heading-form {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  max-width: 520px;
+  margin: 0;
 }
 
-.add-heading-form .inline-heading-name {
-  flex: 1;
-  min-width: 0;
+.add-heading-form .product-list {
+  margin: 0;
 }
 
 .add-product-row {

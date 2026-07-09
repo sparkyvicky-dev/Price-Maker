@@ -456,11 +456,28 @@ const app = {
 
   renderAddHeadingCard() {
     return `
-      <div class="brand-card add-heading-card" role="listitem">
-        <form class="add-heading-form" aria-label="Add new heading">
-          <input type="text" class="inline-heading-name form-input" placeholder="New heading name…" aria-label="New heading name">
-          <button type="submit" class="btn btn-sm btn-primary">+ Add Heading</button>
-        </form>
+      <div class="brand-card custom-section-card add-heading-card" role="listitem">
+        <div class="brand-card-header">
+          <div class="brand-title-row">
+            <span class="drag-handle drag-handle-inert" aria-hidden="true">⠿</span>
+            <h3 class="section-name add-heading-title">Add Heading</h3>
+            <span class="heading-spacer" aria-hidden="true"></span>
+          </div>
+        </div>
+        <div class="brand-products">
+          <form class="add-heading-form" aria-label="Add new heading">
+            <ul class="product-list" role="list">
+              <li class="product-row add-heading-row" role="listitem">
+                <span class="add-row-spacer" aria-hidden="true"></span>
+                <input type="text" class="inline-heading-name form-input" placeholder="Heading name… e.g. Smart TV, Accessories" aria-label="New heading name">
+                <span class="add-row-delete-spacer" aria-hidden="true"></span>
+                <div class="add-row-price-col">
+                  <button type="submit" class="btn btn-sm btn-primary btn-inline-add-submit">+ Add Heading</button>
+                </div>
+              </li>
+            </ul>
+          </form>
+        </div>
       </div>`;
   },
 
