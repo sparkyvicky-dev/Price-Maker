@@ -118,6 +118,7 @@ const app = {
       el.addEventListener('blur', () => saveHeaderFooterFromUI());
     });
 
+    document.getElementById('btn-select-all')?.addEventListener('click', () => this.toggleSelectAll());
     document.getElementById('btn-bulk-edit')?.addEventListener('click', () => this.openBulkEdit());
     document.getElementById('bulk-edit-form')?.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -183,6 +184,7 @@ const app = {
     const count = selectedProducts.size;
     const copyBtn = document.getElementById('btn-copy-selected');
     const previewBtn = document.getElementById('btn-preview-selected');
+    const selectAllBtn = document.getElementById('btn-select-all');
 
     if (copyBtn) {
       copyBtn.textContent = count ? `✓ Copy Selected (${count})` : '✓ Copy Selected';
@@ -192,6 +194,27 @@ const app = {
       previewBtn.textContent = count ? `👁 Preview Selected (${count})` : '👁 Preview Selected';
       previewBtn.disabled = count === 0;
     }
+
+    const filtered = this.getFilteredProducts();
+    const allSelected = filtered.length > 0 && filtered.every(p => selectedProducts.has(p.id));
+    if (selectAllBtn) {
+      selectAllBtn.textContent = allSelected ? 'Deselect All' : 'Select All';
+      selectAllBtn.setAttribute('aria-label', allSelected ? 'Deselect all visible models' : 'Select all visible models');
+      selectAllBtn.disabled = filtered.length === 0;
+    }
+  },
+
+  toggleSelectAll() {
+    const filtered = this.getFilteredProducts();
+    if (!filtered.length) return;
+
+    const allSelected = filtered.every(p => selectedProducts.has(p.id));
+    for (const p of filtered) {
+      if (allSelected) selectedProducts.delete(p.id);
+      else selectedProducts.add(p.id);
+    }
+    this.updateSelectionUI();
+    this.renderBrandCards();
   },
 
   async updateStats() {
@@ -294,6 +317,7 @@ const app = {
 
     this.bindBrandCardEvents(container);
     this.initDragReorder(container);
+    this.updateSelectionUI();
   },
 
   renderProductList(productList) {
