@@ -8,7 +8,7 @@ Offline price list app for mobile dealers. Same Excel formats and WhatsApp messa
 
 1. Install **Node.js** (LTS): https://nodejs.org  
 2. Install **Git**: https://git-scm.com/download/win  
-3. Install **Expo Go** on your Android phone (Play Store)  
+3. Install **Expo Go** on your Android phone (Play Store) — must be up to date  
 4. Double-click **`setup-mobile.bat`** in the project root  
    - Installs/updates **`F:\New folder\price-maker`**  
    - Downloads `mobile\` if missing (`git pull`)  
@@ -21,6 +21,9 @@ npm start
 ```
 
 6. Scan the QR code with **Expo Go**
+
+> **Expo Go mismatch?** This app uses **Expo SDK 52** (works with Play Store Expo Go).  
+> After `git pull`, run `setup-mobile.bat` again to reinstall dependencies.
 
 **Not sure if files exist?** Run **`check-folders.bat`**
 

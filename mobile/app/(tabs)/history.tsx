@@ -77,7 +77,11 @@ const styles = StyleSheet.create({
   card: { borderWidth: 1, borderRadius: 12, padding: spacing.md, marginBottom: spacing.sm },
   date: { fontSize: 17, fontWeight: '700' },
   detailOverlay: {
-    ...StyleSheet.absoluteFill,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'center',
     padding: spacing.lg,
