@@ -2,82 +2,107 @@
 title Price Maker - Android (Expo) Setup
 setlocal EnableExtensions
 
-rem ============================================================
-rem  Put this file inside your price-maker folder, e.g.:
-rem  F:\New folder\price-maker\setup-mobile.bat
-rem ============================================================
+rem Default install path (change if you use a different folder)
+set "TARGET_DIR=F:\New folder\price-maker"
+set "GIT_URL=https://github.com/sparkyvicky-dev/Price-Maker.git"
 
-set "REPO_DIR=%~dp0"
-set "REPO_DIR=%REPO_DIR:~0,-1%"
-set "MOBILE_DIR=%REPO_DIR%\mobile"
+rem If run from inside the project, use that folder instead
+set "SCRIPT_DIR=%~dp0"
+set "SCRIPT_DIR=%SCRIPT_DIR:~0,-1%"
+if exist "%SCRIPT_DIR%\index.html" set "TARGET_DIR=%SCRIPT_DIR%"
+
+set "MOBILE_DIR=%TARGET_DIR%\mobile"
 
 echo.
 echo  Price Maker - Android setup
-echo  Project folder: %REPO_DIR%
+echo  Project folder: %TARGET_DIR%
 echo.
 
-if not exist "%REPO_DIR%\index.html" (
-    echo  ERROR: This does not look like the price-maker folder.
-    echo  Expected index.html in: %REPO_DIR%
+if not exist "%TARGET_DIR%\index.html" (
+    echo  Project not found. Downloading to:
+    echo  %TARGET_DIR%
     echo.
-    echo  Your folder should look like:
-    echo    F:\New folder\price-maker\index.html     ^(PC web app^)
-    echo    F:\New folder\price-maker\mobile\         ^(Android app^)
+    if not exist "F:\New folder" mkdir "F:\New folder" 2>nul
+    where git >nul 2>&1
+    if errorlevel 1 (
+        echo  ERROR: Git is not installed.
+        echo  Install from https://git-scm.com/download/win
+        echo  Then run this file again.
+        echo.
+        pause
+        exit /b 1
+    )
+    if exist "%TARGET_DIR%\.git" (
+        echo  Updating existing folder...
+        cd /d "%TARGET_DIR%"
+        git pull origin main
+    ) else (
+        echo  Cloning from GitHub...
+        git clone %GIT_URL% "%TARGET_DIR%"
+    )
     echo.
+)
+
+if not exist "%TARGET_DIR%\index.html" (
+    echo  ERROR: Could not get price-maker project.
     pause
     exit /b 1
 )
 
 if not exist "%MOBILE_DIR%\package.json" (
-    echo  ERROR: mobile folder not found.
-    echo  Expected: %MOBILE_DIR%\package.json
+    echo  mobile folder missing - pulling latest code...
     echo.
-    echo  Pull the latest code from GitHub:
-    echo    cd /d "%REPO_DIR%"
-    echo    git pull
-    echo.
-    echo  Or clone fresh:
-    echo    cd /d "F:\New folder"
-    echo    git clone https://github.com/sparkyvicky-dev/Price-Maker.git price-maker
-    echo.
-    pause
-    exit /b 1
+    where git >nul 2>&1
+    if errorlevel 1 (
+        echo  ERROR: Git required to download the Android app.
+        echo  Install Git: https://git-scm.com/download/win
+        pause
+        exit /b 1
+    )
+    cd /d "%TARGET_DIR%"
+    git fetch origin main
+    git pull origin main
+    if not exist "%MOBILE_DIR%\package.json" (
+        echo.
+        echo  Still no mobile folder. Try:
+        echo    cd /d "%TARGET_DIR%"
+        echo    git pull origin main
+        echo.
+        echo  Or clone fresh:
+        echo    cd /d "F:\New folder"
+        echo    rmdir /s /q price-maker
+        echo    git clone %GIT_URL% price-maker
+        echo.
+        pause
+        exit /b 1
+    )
 )
 
 where node >nul 2>&1
 if errorlevel 1 (
     echo  ERROR: Node.js is not installed.
-    echo  Download from https://nodejs.org/ ^(LTS^), install, then run this again.
-    echo.
+    echo  Download LTS from https://nodejs.org/
     pause
     exit /b 1
 )
 
-echo  Installing Android app dependencies...
-echo.
+echo  Installing Android dependencies...
 cd /d "%MOBILE_DIR%"
 call npm install --legacy-peer-deps
 if errorlevel 1 (
-    echo.
     echo  npm install failed.
     pause
     exit /b 1
 )
 
 echo.
-echo  Done! Android app is ready in:
-echo  %MOBILE_DIR%
-echo.
-echo  PC web app ^(browser^): double-click "price maker.bat" or open index.html
-echo  Android app ^(phone^):  run "start-mobile.bat" and scan QR in Expo Go
+echo  SUCCESS!
+echo  PC app:     %TARGET_DIR%\price maker.bat
+echo  Android:    %TARGET_DIR%\start-mobile.bat
 echo.
 
-set /p START_NOW="Start Expo now for phone testing? (Y/N): "
-if /I "%START_NOW%"=="Y" (
-    cd /d "%REPO_DIR%"
-    start "" "%REPO_DIR%\start-mobile.bat"
-)
+set /p START_NOW="Start Expo now? (Y/N): "
+if /I "%START_NOW%"=="Y" start "" "%TARGET_DIR%\start-mobile.bat"
 
-echo.
 pause
 exit /b 0
