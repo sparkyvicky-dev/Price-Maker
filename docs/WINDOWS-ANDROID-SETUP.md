@@ -92,10 +92,16 @@ C:\Users\12vic> npm start    ← WRONG (no package.json here)
 Always use:
 
 ```bat
-F:\New folder\price-maker\mobile>   ← correct for npm
+F:\New folder\Price-Maker\start-mobile.bat
 ```
 
-Or just double-click **start-mobile.bat** from `price-maker` — it goes to `mobile` for you.
+Or:
+
+```bat
+cd /d "F:\New folder\Price-Maker\mobile"
+npm install --legacy-peer-deps
+npx expo start
+```
 
 ---
 

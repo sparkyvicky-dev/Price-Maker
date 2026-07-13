@@ -22,8 +22,8 @@ npm start
 
 6. Scan the QR code with **Expo Go**
 
-> **Expo Go mismatch?** This app uses **Expo SDK 52** (works with Play Store Expo Go).  
-> After `git pull`, run `setup-mobile.bat` again to reinstall dependencies.
+> **Expo Go:** This app uses **Expo SDK 54** (works with Play Store Expo Go).  
+> On a new PC: `git pull` then run **`setup-mobile.bat`** once.
 
 **Not sure if files exist?** Run **`check-folders.bat`**
 

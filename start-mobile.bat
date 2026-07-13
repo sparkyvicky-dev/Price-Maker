@@ -26,6 +26,17 @@ if errorlevel 1 (
 
 cd /d "%APP_DIR%"
 
+if not exist "node_modules\expo\package.json" (
+    echo.
+    echo  Installing dependencies first...
+    call npm install --legacy-peer-deps
+    if errorlevel 1 (
+        echo  npm install failed.
+        pause
+        exit /b 1
+    )
+)
+
 echo.
 echo  Starting Price Maker for Android...
 echo  1. Install "Expo Go" on your phone ^(Play Store^)
@@ -35,6 +46,6 @@ echo.
 echo  Press Ctrl+C to stop.
 echo.
 
-call npm start
+call npx expo start
 
 pause
