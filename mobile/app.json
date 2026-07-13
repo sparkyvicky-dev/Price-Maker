@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "Price Maker",
+    "slug": "price-maker",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "scheme": "pricemaker",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.sparkymobiles.pricemaker"
+    },
+    "android": {
+      "package": "com.sparkymobiles.pricemaker",
+      "adaptiveIcon": {
+        "backgroundColor": "#0f172a",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "permissions": [
+        "READ_CONTACTS"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      [
+        "expo-contacts",
+        {
+          "contactsPermission": "Price Maker uses contacts so you can send price lists to dealers."
+        }
+      ]
+    ]
+  }
+}

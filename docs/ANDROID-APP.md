@@ -302,6 +302,6 @@ Message body uses the same `*bold*` formatting WhatsApp understands.
 
 ---
 
-**Next step:** scaffold Expo project and port Excel + message logic first, then Contacts + WhatsApp intent.
+**Next step:** run the app — `cd mobile && npm start` — and test on your phone with Expo Go.
 
-**Price Maker** — Android plan v0.2
+**Price Maker** — Android plan v0.2 · Expo app in `/mobile`
