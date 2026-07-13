@@ -2,8 +2,9 @@
 title Price Maker - Android (Expo)
 setlocal
 
-set "APP_DIR=%~dp0mobile"
-set "APP_DIR=%APP_DIR:~0,-1%"
+set "ROOT=%~dp0"
+set "ROOT=%ROOT:~0,-1%"
+set "APP_DIR=%ROOT%\mobile"
 
 if not exist "%APP_DIR%\package.json" (
     echo.
