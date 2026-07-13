@@ -1,11 +1,14 @@
-# Windows — F:\New folder\price-maker
+# Windows — Local PC setup
+
+> **Recommended path:** `D:\Github projects\price-maker`  
+> **Full guide:** [LOCAL-PC-SETUP.md](LOCAL-PC-SETUP.md) — clone, daily workflow, and push to GitHub.
 
 One folder for **both** PC and Android. You do **not** need two separate projects.
 
 ## Folder layout (what you should have)
 
 ```
-F:\New folder\
+D:\Github projects\
 └── price-maker\              ← ONE project (git repo)
     ├── index.html            ← PC web app
     ├── setup.bat             ← PC: desktop launcher
@@ -31,9 +34,9 @@ F:\New folder\
 Open **Command Prompt** and run:
 
 ```bat
-dir "F:\New folder"
-dir "F:\New folder\price-maker"
-dir "F:\New folder\price-maker\mobile"
+dir "D:\Github projects"
+dir "D:\Github projects\price-maker"
+dir "D:\Github projects\price-maker\mobile"
 ```
 
 **If you see `index.html`** → PC app is there.  
@@ -45,15 +48,15 @@ dir "F:\New folder\price-maker\mobile"
 ## Step 2 — Get latest code (if mobile folder missing)
 
 ```bat
-cd /d "F:\New folder\price-maker"
+cd /d "D:\Github projects\price-maker"
 git pull
 ```
 
 If you don't have git or the folder is old, clone fresh:
 
 ```bat
-cd /d "F:\New folder"
-git clone https://github.com/sparkyvicky-dev/Price-Maker.git price-maker
+cd /d "D:\Github projects"
+git clone https://github.com/sparkyvicky-dev/price-maker.git price-maker
 ```
 
 ---
@@ -61,7 +64,7 @@ git clone https://github.com/sparkyvicky-dev/Price-Maker.git price-maker
 ## Step 3 — Android setup (one time)
 
 ```bat
-cd /d "F:\New folder\price-maker"
+cd /d "D:\Github projects\price-maker"
 setup-mobile.bat
 ```
 
@@ -75,7 +78,7 @@ Or double-click **setup-mobile.bat** in File Explorer.
 2. Run:
 
 ```bat
-cd /d "F:\New folder\price-maker"
+cd /d "D:\Github projects\price-maker"
 start-mobile.bat
 ```
 
@@ -92,13 +95,13 @@ C:\Users\12vic> npm start    ← WRONG (no package.json here)
 Always use:
 
 ```bat
-F:\New folder\Price-Maker\start-mobile.bat
+D:\Github projects\price-maker\start-mobile.bat
 ```
 
 Or:
 
 ```bat
-cd /d "F:\New folder\Price-Maker\mobile"
+cd /d "D:\Github projects\price-maker\mobile"
 npm install --legacy-peer-deps
 npx expo start
 ```

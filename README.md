@@ -16,6 +16,13 @@ A professional, offline-first web application for mobile shop owners to manage d
 
 ## Quick Start
 
+### Local PC (edit locally, push when ready)
+
+Clone or update to **`D:\Github projects\price-maker`**, work on your machine, then push to GitHub.
+
+1. Run **`pull-to-local.bat`** (or see manual steps in the guide)
+2. Read **[docs/LOCAL-PC-SETUP.md](docs/LOCAL-PC-SETUP.md)** for the full workflow
+
 ### Option 1: Open directly
 Open `index.html` in a modern browser (Chrome, Edge, Firefox).
 
