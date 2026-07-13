@@ -1,6 +1,8 @@
-# Sparky Mobiles Price Manager — Android App Plan
+# Price Maker — Android App Plan
 
 Planning document for the native Android app. **No code yet** — this lists what we will build, how data works, and how we will test it.
+
+**App name on phone:** **Price Maker**
 
 ---
 
@@ -8,9 +10,9 @@ Planning document for the native Android app. **No code yet** — this lists wha
 
 Give shop owners the **same daily price-list workflow** as the web app, optimized for phone use:
 
-- Upload Excel or PDF price lists
+- Upload **Excel** price lists (PDF later)
 - Edit prices, organize by brand, copy/send WhatsApp messages
-- **New on Android:** dealer **Contacts** in the sidebar — tap WhatsApp icon → Android opens **WhatsApp** or **WhatsApp Business** (you pick the app) with the message ready; you tap Send yourself
+- **New on Android:** dealer **Contacts** in the sidebar — import from phone or add manually — tap WhatsApp icon → Android opens **WhatsApp** or **WhatsApp Business** (you pick the app) with the message ready; you tap Send yourself
 
 **Offline-first:** all data lives on the phone. Internet only needed for first-time library load (if any) — not for daily use.
 
@@ -23,7 +25,7 @@ Give shop owners the **same daily price-list workflow** as the web app, optimize
 | Feature | Details |
 |--------|---------|
 | Upload Excel | `.xls`, `.xlsx` from phone storage / file picker |
-| Upload PDF | Text extraction from dealer PDF price lists |
+| Upload PDF | **Not in v1** — Excel only for now; PDF in a later phase |
 | Auto format detection | Same parsers as web — no manual format selection |
 | Supported Excel types | **Sparky Stock Report**, **PakkaBill Stock Summary**, **Stock Summary Report** (names-only), **generic** (Brand / Model / RAM / Storage / Price columns) |
 | Brand detection | Vivo, Samsung, Apple, Oppo, Realme, OnePlus, Motorola, etc. |
@@ -96,10 +98,13 @@ New nav item: **Contacts**
 
 | Action | Behavior |
 |--------|----------|
-| Add contact | Name + phone number (with country code, e.g. +91…) |
+| **Import from phone** | Pick contacts from Android address book (permission prompt); import name + number |
+| Add contact manually | Name + phone number (with country code, e.g. +91…) |
 | Edit / delete | Long-press or swipe to edit/remove |
 | Search contacts | Quick filter by name |
 | Optional fields (later) | Notes, tags (e.g. “Wholesale”, “Retail”), favorite pin |
+
+Imported contacts are copied into the app database — edits in Price Maker do not change your phone’s main contacts app.
 
 Contacts are stored **only on the device** (local database).
 
@@ -148,18 +153,18 @@ Everything important is stored locally. No account or server required for normal
 | Contacts | Local DB |
 | Logo image | App files directory |
 
-**Works without internet** after install (Excel/PDF parsing libraries bundled in the app).
+**Works without internet** after install (Excel parsing libraries bundled in the app).
 
-### Optional: sync across devices (Phase 2 — only if we want it)
+### Sync across devices — **TBD (decide later)**
 
 | Option | Pros | Cons |
 |--------|------|------|
-| **A. JSON export/import** | Simple; matches web backup; no server | Manual — export on one phone, import on another |
+| **A. JSON export/import** | Simple; matches web backup; no server | Manual — export on one device, import on another |
 | **B. Google Drive / folder sync** | Automatic file backup | Still not real-time sync |
 | **C. Firebase / Supabase** | Same data on phone + PC + web instantly | Needs internet, account, backend cost, more work |
 | **D. Same Wi‑Fi LAN sync** | No cloud; shop PC ↔ phone on same network | Harder to build; both devices must be on |
 
-**Recommendation:** Ship **v1 fully offline** with **JSON backup/restore** (same format as web). Add cloud sync later only if you need live multi-device updates.
+**v1 plan:** Ship **fully offline** with **JSON backup/restore** (same format as web). You can move data between phone and PC manually until we pick a sync approach.
 
 ---
 
@@ -173,14 +178,15 @@ Good fit for fast testing and iteration:
 |----------|-------|
 | Test on your phone quickly | **Expo Go** app — scan QR, see changes in seconds |
 | One codebase | Can share message-building logic with web (JavaScript) |
-| File picker | `expo-document-picker` for Excel/PDF |
+| File picker | `expo-document-picker` for Excel |
+| Phone contacts | `expo-contacts` — import name + number with permission |
 | WhatsApp | `Linking.openURL('whatsapp://send?phone=...&text=...')` or `expo-intent-launcher` on Android |
 | Local DB | `expo-sqlite` or WatermelonDB |
 | Build APK | EAS Build when ready for install without Expo Go |
 
 **Excel parsing:** Port existing `excel.js` logic (SheetJS works in RN with polyfills) or use same SheetJS build.
 
-**PDF parsing:** Harder on mobile — options: native module, serverless extract, or **v1 Excel-only** and PDF in v1.1.
+**PDF parsing:** Deferred — **Excel only in v1**.
 
 ### Alternative: **Capacitor** (wrap web app)
 
@@ -201,9 +207,9 @@ Best long-term Android feel; slowest to build and test.
 
 ```
 ┌─────────────────────────────────────┐
-│  ☰  Sparky Mobiles                  │
+│  ☰  Price Maker                     │
 ├──────────┬──────────────────────────┤
-│ Dashboard│  [Upload Excel] [PDF]    │
+│ Dashboard│  [Upload Excel]          │
 │ History  │  Stats…                  │
 │ Compare  │  Brand cards…            │
 │ Contacts │  [Copy] [WA → contact]   │
@@ -226,14 +232,15 @@ Best long-term Android feel; slowest to build and test.
 ### Phase 1 — Core (MVP)
 
 - [ ] Expo project + Android test via Expo Go
-- [ ] Local database (products, settings)
+- [ ] Local database (products, settings, contacts)
 - [ ] Excel upload + all format parsers (port from web)
 - [ ] Brand cards, price edit, undo
 - [ ] WhatsApp message builder (port from `preview.js` + `utils.js`)
 - [ ] Copy to clipboard
-- [ ] Contacts CRUD
+- [ ] Contacts: manual add + **import from phone contacts**
 - [ ] WA icon → WhatsApp / WhatsApp Business chooser with pre-filled message
 - [ ] Save snapshot + basic history list
+- [ ] JSON export/import backup (manual device sync)
 
 ### Phase 2 — Parity
 
@@ -249,8 +256,20 @@ Best long-term Android feel; slowest to build and test.
 - [ ] Standalone APK (EAS Build)
 - [ ] Onboarding (first-run tips)
 - [ ] Send brand to contact from brand card
-- [ ] Optional cloud or Drive backup
+- [ ] **Decide sync approach** (JSON only vs Drive vs cloud) and implement if needed
 - [ ] Play Store release (if wanted)
+
+---
+
+## Decisions locked
+
+| Question | Decision |
+|----------|----------|
+| Excel vs PDF in v1 | **Excel only** — PDF in a later phase |
+| Contacts | **Import from phone contacts** + manual add/edit |
+| Multi-device sync | **TBD** — v1 uses JSON backup/restore; pick auto-sync later if needed |
+| App name | **Price Maker** |
+| Login | **None** — local-only data on phone |
 
 ---
 
@@ -268,32 +287,21 @@ Message body uses the same `*bold*` formatting WhatsApp understands.
 
 ---
 
-## Open questions (your input)
-
-1. **PDF in v1 or v1.1?** PDF on mobile is more work than Excel — OK to ship Excel first?
-2. **Contacts:** only manual add, or also **import from phone contacts**?
-3. **Sync:** is JSON backup enough for now, or do you need automatic sync between shop PC and phone?
-4. **App name on phone:** “Price Maker” or “Sparky Mobiles”?
-5. **Login:** none for v1 (local only) — confirm?
-
----
-
 ## Summary checklist — what we are going to do
 
 | # | Item |
 |---|------|
-| 1 | Android app (Expo) with offline local storage |
-| 2 | Excel upload with all current format types |
-| 3 | PDF upload (Phase 1 or 2 — TBD) |
-| 4 | Same brand-wise list, edit, copy, preview as web |
-| 5 | Contacts section: name + number |
-| 6 | WA icon opens WhatsApp / WhatsApp Business; you send manually |
-| 7 | History, snapshots, compare, calendar (phased) |
-| 8 | JSON backup/restore; optional multi-device sync later |
-| 9 | Test on real Android phone via Expo Go before APK |
+| 1 | **Price Maker** Android app (Expo) with offline local storage |
+| 2 | **Excel only** in v1 — all current format types |
+| 3 | Same brand-wise list, edit, copy, preview as web |
+| 4 | Contacts: **import from phone** + manual add; WA send |
+| 5 | WA icon opens WhatsApp / WhatsApp Business; you send manually |
+| 6 | History, snapshots (compare/calendar in Phase 2) |
+| 7 | JSON backup/restore; auto sync **TBD for later** |
+| 8 | Test on real Android phone via Expo Go before APK |
 
 ---
 
-**Next step after you approve this doc:** scaffold Expo project and port Excel + message logic first, then Contacts + WhatsApp intent.
+**Next step:** scaffold Expo project and port Excel + message logic first, then Contacts + WhatsApp intent.
 
-**Sparky Mobiles** — Android plan v0.1
+**Price Maker** — Android plan v0.2
