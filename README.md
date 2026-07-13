@@ -39,9 +39,11 @@ Then visit `http://localhost:8080`
 See **[docs/VPS-DEPLOY.md](docs/VPS-DEPLOY.md)** for full Nginx + HTTPS deployment steps.
 
 ### Option 4: Android app
-See **[mobile/README.md](mobile/README.md)** to run **Price Maker** on Android via Expo Go.
+See **[docs/WINDOWS-ANDROID-SETUP.md](docs/WINDOWS-ANDROID-SETUP.md)** for Windows setup (e.g. `F:\New folder\price-maker`).
 
-Planning doc: **[docs/ANDROID-APP.md](docs/ANDROID-APP.md)**
+Quick: run **`setup-mobile.bat`** once, then **`start-mobile.bat`** → scan QR in Expo Go.
+
+Details: **[mobile/README.md](mobile/README.md)** · Plan: **[docs/ANDROID-APP.md](docs/ANDROID-APP.md)**
 
 ## Project Structure
 

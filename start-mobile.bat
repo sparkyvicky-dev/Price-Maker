@@ -1,0 +1,39 @@
+@echo off
+title Price Maker - Android (Expo)
+setlocal
+
+set "APP_DIR=%~dp0mobile"
+set "APP_DIR=%APP_DIR:~0,-1%"
+
+if not exist "%APP_DIR%\package.json" (
+    echo.
+    echo  Mobile app not set up yet.
+    echo  Run setup-mobile.bat once from the price-maker folder.
+    echo.
+    pause
+    exit /b 1
+)
+
+where node >nul 2>&1
+if errorlevel 1 (
+    echo.
+    echo  Node.js not found. Install from https://nodejs.org/
+    echo.
+    pause
+    exit /b 1
+)
+
+cd /d "%APP_DIR%"
+
+echo.
+echo  Starting Price Maker for Android...
+echo  1. Install "Expo Go" on your phone ^(Play Store^)
+echo  2. Scan the QR code shown below
+echo  3. Phone and PC must be on the same Wi-Fi
+echo.
+echo  Press Ctrl+C to stop.
+echo.
+
+call npm start
+
+pause
