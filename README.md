@@ -38,6 +38,9 @@ Then visit `http://localhost:8080`
 ### Option 3: VPS (phone + PC from anywhere)
 See **[docs/VPS-DEPLOY.md](docs/VPS-DEPLOY.md)** for full Nginx + HTTPS deployment steps.
 
+### Option 4: Android app (planned)
+See **[docs/ANDROID-APP.md](docs/ANDROID-APP.md)** for the Android feature plan (offline storage, contacts, WhatsApp send, Expo testing).
+
 ## Project Structure
 
 ```
