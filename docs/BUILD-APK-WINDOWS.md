@@ -164,7 +164,7 @@ Then reinstall the new APK on the phone.
 
 | Error | Fix |
 |-------|-----|
-| `Unsupported class file major version 69` | You are on **Java 25**. Install **JDK 17**, set `JAVA_HOME`, open new CMD, rebuild |
+| `Unsupported class file major version 69` | You are on **Java 25**. Run **`fix-java17.bat`** once, close CMD, open new CMD, rebuild |
 | `ANDROID_HOME not set` | Set env var (see above), open **new** CMD |
 | `Java not found` / wrong Java | Install **JDK 17**, not only JRE |
 | `SDK location not found` | Open Android Studio once; install SDK Platforms |

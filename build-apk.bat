@@ -36,12 +36,11 @@ if not defined JAVA_HOME (
     echo.
     echo  ERROR: Need JDK 17 or 21. Your Java is too new or missing.
     echo.
-    echo  Download Temurin 17:
-    echo    https://adoptium.net/temurin/releases/?version=17
-    echo  Choose: Windows x64  .msi  JDK
+    echo  EASY FIX: run this once from the project folder:
+    echo    fix-java17.bat
     echo.
-    echo  Then set JAVA_HOME to the JDK folder, e.g.:
-    echo    C:\Program Files\Eclipse Adoptium\jdk-17.x.x.x-hotspot
+    echo  Or download Temurin 17:
+    echo    https://adoptium.net/temurin/releases/?version=17
     echo.
     echo  Check current Java:
     echo    java -version
