@@ -1,33 +1,34 @@
 # Windows — Local PC setup
 
 > **This PC path:** `D:\New folder\price-maker`  
-> **Full guide:** [LOCAL-PC-SETUP.md](LOCAL-PC-SETUP.md)  
-> **APK (no Expo Go):** [BUILD-APK.md](BUILD-APK.md)
+> **APK guide:** [BUILD-APK.md](BUILD-APK.md) (Android Studio — no Expo Go)  
+> **Full workflow:** [LOCAL-PC-SETUP.md](LOCAL-PC-SETUP.md)
 
-One folder for **both** PC and Android.
+One folder for **both** PC web app and Android app.
 
 ## Folder layout
 
 ```
 D:\New folder\
-└── price-maker\              ← ONE project (git repo)
+└── price-maker\
     ├── index.html
-    ├── pull-to-local.bat     ← pull/update from GitHub
-    ├── setup-apk-pc.bat      ← build installable APK
+    ├── pull-to-local.bat
+    ├── setup-apk-pc.bat
     ├── build-apk.bat
     ├── price maker.bat
     ├── setup-mobile.bat
     ├── start-mobile.bat
-    ├── js\
-    ├── css\
+    ├── docs\
+    │   ├── BUILD-APK.md
+    │   └── README.md
     └── mobile\
 ```
 
-| Part | How to run |
-|------|------------|
-| **Pull code** | `pull-to-local.bat` |
-| **APK** | `setup-apk-pc.bat` |
-| **PC web** | `price maker.bat` |
+| Goal | Run |
+|------|-----|
+| Pull / update | `pull-to-local.bat` |
+| Build APK | `build-apk.bat` or `setup-apk-pc.bat` |
+| PC web app | `price maker.bat` |
 
 ---
 
@@ -42,20 +43,21 @@ git fetch origin
 git checkout cursor/alternative-apk-build-e99b
 ```
 
-Or download **`pull-to-local.bat`** from GitHub and double-click it (creates `D:\New folder\price-maker`).
-
 ---
 
-## Build APK (no Expo Go)
+## Build APK (Android Studio)
 
 ```bat
 cd /d "D:\New folder\price-maker"
-setup-apk-pc.bat
+build-apk.bat
 ```
+
+Needs **Android Studio** installed: https://developer.android.com/studio
 
 ---
 
-## Node.js + Git required
+## Tools required
 
 - Git: https://git-scm.com/download/win  
 - Node.js LTS: https://nodejs.org/  
+- Android Studio (for APK): https://developer.android.com/studio  

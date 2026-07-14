@@ -182,7 +182,7 @@ Good fit for fast testing and iteration:
 | Phone contacts | `expo-contacts` — import name + number with permission |
 | WhatsApp | `Linking.openURL('whatsapp://send?phone=...&text=...')` or `expo-intent-launcher` on Android |
 | Local DB | `expo-sqlite` or WatermelonDB |
-| Build APK | EAS Build when ready for install without Expo Go |
+| Build APK | **Android Studio / Gradle on PC** (see `docs/BUILD-APK.md`) — no Expo Go |
 
 **Excel parsing:** Port existing `excel.js` logic (SheetJS works in RN with polyfills) or use same SheetJS build.
 
@@ -253,7 +253,7 @@ Best long-term Android feel; slowest to build and test.
 
 ### Phase 3 — Polish & optional sync
 
-- [ ] Standalone APK (EAS Build)
+- [x] Standalone APK via **Android Studio / local Gradle** (`build-apk.bat`)
 - [ ] Onboarding (first-run tips)
 - [ ] Send brand to contact from brand card
 - [ ] **Decide sync approach** (JSON only vs Drive vs cloud) and implement if needed
@@ -302,6 +302,6 @@ Message body uses the same `*bold*` formatting WhatsApp understands.
 
 ---
 
-**Next step:** run the app — `cd mobile && npm start` — and test on your phone with Expo Go.
+**Next step:** build the APK — `build-apk.bat` in the project root (Android Studio). Dev-only: `cd mobile && npm start` + Expo Go.
 
-**Price Maker** — Android plan v0.2 · Expo app in `/mobile`
+**Price Maker** — Android plan · Expo app in `/mobile` · APK via Android Studio

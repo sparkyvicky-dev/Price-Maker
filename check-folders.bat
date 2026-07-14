@@ -9,13 +9,12 @@ echo.
 call :Check "D:\New folder\price-maker"
 call :Check "D:\Github projects\price-maker"
 call :Check "F:\New folder\price-maker"
-call :Check "C:\Users\%USERNAME%\Documents\price-maker"
-call :Check "C:\Users\%USERNAME%\price-maker"
 
 echo.
-echo  Recommended on this PC: D:\New folder\price-maker
-echo  Pull: run pull-to-local.bat
-echo  APK:  run setup-apk-pc.bat  ^(no Expo Go^)
+echo  This PC path: D:\New folder\price-maker
+echo  Pull: pull-to-local.bat
+echo  APK:  build-apk.bat  ^(Android Studio — no Expo Go^)
+echo  Docs: docs\BUILD-APK.md
 echo.
 pause
 exit /b 0

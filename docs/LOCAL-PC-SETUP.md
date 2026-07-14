@@ -46,8 +46,8 @@ D:\New folder\
     ├── setup.bat                ← PC: create desktop shortcut (run once)
     ├── price maker.bat          ← PC: start in browser
     ├── pull-to-local.bat        ← clone or update this folder
-    ├── setup-apk-pc.bat         ← NEW PC: clone + build APK (no Expo Go)
-    ├── build-apk.bat            ← build installable Android APK
+    ├── setup-apk-pc.bat         ← pull + prepare local APK build
+    ├── build-apk.bat            ← Android Studio / Gradle APK (recommended)
     ├── setup-mobile.bat         ← Android: install deps (run once)
     ├── start-mobile.bat         ← Android: start Expo on phone (dev only)
     ├── js\                      ← PC app code

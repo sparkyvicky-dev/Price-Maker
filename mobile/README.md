@@ -54,21 +54,26 @@ No separate Copy / Preview / Open WhatsApp buttons on every card — one **Share
 
 All data is stored locally in SQLite on the device. No account required.
 
-## Build APK (no Expo Go)
+## Build APK (Android Studio — no Expo Go)
 
-For daily use on the phone, build a **standalone APK** instead of Expo Go.
+For daily use, build a **standalone APK on this PC**.
 
-**Windows (easiest):** double-click **`build-apk.bat`** in the project root → choose Cloud build.
+**Folder:** `D:\New folder\price-maker`
 
-```bash
-cd mobile
-npm install --legacy-peer-deps
-npx eas-cli login
-npx eas-cli build -p android --profile apk
+```bat
+cd /d "D:\New folder\price-maker"
+build-apk.bat
 ```
 
-Or: `npm run build:apk`
+Choose **1** (Gradle) or **2** (open in Android Studio).
 
-Download the `.apk` from the Expo build page, install on the phone. **Expo Go not required.**
+APK output:
+
+```
+mobile\android\app\build\outputs\apk\release\app-release.apk
+```
 
 Full guide: **[docs/BUILD-APK.md](../docs/BUILD-APK.md)**
+
+Needs: Node.js + [Android Studio](https://developer.android.com/studio).  
+Does **not** need Expo Go or expo.dev.

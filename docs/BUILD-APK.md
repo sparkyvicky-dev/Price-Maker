@@ -3,25 +3,23 @@
 **No Expo Go. No expo.dev cloud.**  
 Build the `.apk` on this PC with Android Studio / Gradle.
 
-**Folder:** `D:\New folder\price-maker`
+**Folder on this PC:** `D:\New folder\price-maker`
 
 ---
 
 ## What you need once
 
-| Tool | Why |
-|------|-----|
-| [Git](https://git-scm.com/download/win) | Pull code |
-| [Node.js LTS](https://nodejs.org/) | Generate Android project |
-| [Android Studio](https://developer.android.com/studio) | SDK + build APK |
+| Tool | Download | Why |
+|------|----------|-----|
+| Git | https://git-scm.com/download/win | Pull code |
+| Node.js LTS | https://nodejs.org/ | Generate `android\` project |
+| Android Studio | https://developer.android.com/studio | SDK + build APK |
 
-During Android Studio setup, install the **Android SDK** (default options are fine).
+In Android Studio setup, keep the default **Android SDK** options.
 
 ---
 
-## On the PC you are switching to
-
-### 1. Pull code (if not already done)
+## Step 1 — Get code
 
 ```bat
 mkdir "D:\New folder"
@@ -32,61 +30,64 @@ git fetch origin
 git checkout cursor/alternative-apk-build-e99b
 ```
 
-If the folder already exists:
+Already cloned?
 
 ```bat
 cd /d "D:\New folder\price-maker"
 git pull origin cursor/alternative-apk-build-e99b
 ```
 
-### 2. Build APK locally
+Or double-click **`pull-to-local.bat`**.
+
+---
+
+## Step 2 — Build APK
 
 ```bat
 cd /d "D:\New folder\price-maker"
+build-apk.bat
+```
+
+| Choice | What happens |
+|--------|----------------|
+| **1** | Generate `mobile\android` + Gradle `assembleRelease` |
+| **2** | Generate project only → you open it in Android Studio |
+| **3** | Optional cloud (skip — we use Android Studio) |
+
+Or full setup + build:
+
+```bat
 setup-apk-pc.bat
 ```
 
-Or:
+---
 
-```bat
-build-apk.bat
-```
+## Step 3 — Android Studio (if you chose 2, or Gradle failed)
 
-Choose **`1`** → generate Android project + Gradle build.
+1. Open **Android Studio**  
+2. **File → Open** → `D:\New folder\price-maker\mobile\android`  
+3. Wait for Gradle sync / SDK downloads  
+4. **Build → Build Bundle(s) / APK(s) → Build APK(s)**  
 
-### 3. Or open in Android Studio yourself
+---
 
-```bat
-cd /d "D:\New folder\price-maker"
-build-apk.bat
-```
+## Step 4 — Install on phone
 
-Choose **`2`** (generate only), then in Android Studio:
-
-1. **File → Open** → `D:\New folder\price-maker\mobile\android`  
-2. Wait for Gradle sync / SDK download  
-3. **Build → Build Bundle(s) / APK(s) → Build APK(s)**  
-
-### 4. Install on phone
-
-APK path:
+APK file:
 
 ```
 D:\New folder\price-maker\mobile\android\app\build\outputs\apk\release\app-release.apk
 ```
 
-Copy to phone → open → Install. Open **Price Maker** from the app list.
+1. Copy to phone (USB, Drive, WhatsApp to yourself)  
+2. Open the file → **Install** (allow unknown apps if asked)  
+3. Open **Price Maker** from the app drawer  
+
+No Expo Go. No QR code. No same Wi‑Fi needed.
 
 ---
 
-## Why not expo.dev?
-
-That site is only Expo’s optional cloud builders.  
-With Android Studio everything stays on your PC.
-
----
-
-## Update code later
+## Update after code changes
 
 ```bat
 cd /d "D:\New folder\price-maker"
@@ -94,4 +95,27 @@ git pull
 build-apk.bat
 ```
 
-Choose **1** again to rebuild the APK after changes.
+Choose **1** again.
+
+---
+
+## Scripts reference
+
+| File | Role |
+|------|------|
+| `pull-to-local.bat` | Clone/update into `D:\New folder\price-maker` |
+| `setup-apk-pc.bat` | Pull + `npm install` + start APK builder |
+| `build-apk.bat` | Local prebuild + Gradle / Android Studio |
+| `setup-mobile.bat` | Dev deps only |
+| `start-mobile.bat` | Expo Go live reload (**dev only**) |
+
+---
+
+## Troubleshooting
+
+| Problem | Fix |
+|---------|-----|
+| `node` not found | Install Node.js LTS, open a **new** Command Prompt |
+| Gradle / SDK errors | Open `mobile\android` in Android Studio once; let it install SDK |
+| Phone blocks install | Settings → Install unknown apps → allow Files |
+| Wrong folder | Always use `D:\New folder\price-maker` |
