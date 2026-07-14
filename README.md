@@ -46,9 +46,13 @@ Then visit `http://localhost:8080`
 See **[docs/VPS-DEPLOY.md](docs/VPS-DEPLOY.md)** for full Nginx + HTTPS deployment steps.
 
 ### Option 4: Android app
-See **[docs/WINDOWS-ANDROID-SETUP.md](docs/WINDOWS-ANDROID-SETUP.md)** for Windows setup (e.g. `F:\New folder\price-maker`).
 
-Quick: run **`setup-mobile.bat`** once, then **`start-mobile.bat`** → scan QR in Expo Go.
+See **[docs/WINDOWS-ANDROID-SETUP.md](docs/WINDOWS-ANDROID-SETUP.md)** for Windows setup.
+
+| Goal | What to run |
+|------|-------------|
+| **Installable APK** (recommended — no Expo Go) | **`build-apk.bat`** → see **[docs/BUILD-APK.md](docs/BUILD-APK.md)** |
+| Live reload while coding | **`setup-mobile.bat`** once, then **`start-mobile.bat`** → Expo Go |
 
 Details: **[mobile/README.md](mobile/README.md)** · Plan: **[docs/ANDROID-APP.md](docs/ANDROID-APP.md)**
 

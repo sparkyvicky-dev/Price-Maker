@@ -38,10 +38,13 @@ if not exist "node_modules\expo\package.json" (
 )
 
 echo.
-echo  Starting Price Maker for Android...
+echo  Starting Price Maker for Android ^(dev / Expo Go^)...
 echo  1. Install "Expo Go" on your phone ^(Play Store^)
 echo  2. Scan the QR code shown below
 echo  3. Phone and PC must be on the same Wi-Fi
+echo.
+echo  Want a real APK ^(no Expo Go^)? Close this and run build-apk.bat
+echo  Guide: docs\BUILD-APK.md
 echo.
 echo  Press Ctrl+C to stop.
 echo.

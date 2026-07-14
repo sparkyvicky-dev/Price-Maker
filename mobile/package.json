@@ -6,7 +6,10 @@
     "start": "npx expo start",
     "android": "npx expo start --android",
     "ios": "npx expo start --ios",
-    "web": "npx expo start --web"
+    "web": "npx expo start --web",
+    "build:apk": "npx eas-cli build -p android --profile apk",
+    "build:apk:local": "npx eas-cli build -p android --profile apk --local",
+    "prebuild:android": "npx expo prebuild --platform android --clean"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",

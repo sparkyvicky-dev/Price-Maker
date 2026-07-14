@@ -72,7 +72,20 @@ Or double-click **setup-mobile.bat** in File Explorer.
 
 ---
 
-## Step 4 — Test on phone
+## Step 4 — Install APK on phone (recommended)
+
+**Do not rely on Expo Go for daily use.** Build a normal APK:
+
+```bat
+cd /d "D:\Github projects\price-maker"
+build-apk.bat
+```
+
+Choose **1 Cloud build**, log in to Expo, download the `.apk`, install on the phone.
+
+Full steps: **[BUILD-APK.md](BUILD-APK.md)**
+
+### Optional — live reload while coding (Expo Go)
 
 1. Install **Expo Go** on Android (Play Store)
 2. Run:
@@ -83,6 +96,8 @@ start-mobile.bat
 ```
 
 3. Scan QR code with Expo Go (same Wi‑Fi as PC)
+
+If Expo Go fails or is slow, use **`build-apk.bat`** instead.
 
 ---
 

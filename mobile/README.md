@@ -61,10 +61,21 @@ No separate Copy / Preview / Open WhatsApp buttons on every card — one **Share
 
 All data is stored locally in SQLite on the device. No account required.
 
-## Build APK (later)
+## Build APK (no Expo Go)
+
+For daily use on the phone, build a **standalone APK** instead of Expo Go.
+
+**Windows (easiest):** double-click **`build-apk.bat`** in the project root → choose Cloud build.
 
 ```bash
-npx eas build -p android --profile preview
+cd mobile
+npm install --legacy-peer-deps
+npx eas-cli login
+npx eas-cli build -p android --profile apk
 ```
 
-Requires Expo account and EAS CLI.
+Or: `npm run build:apk`
+
+Download the `.apk` from the Expo build page, install on the phone. **Expo Go not required.**
+
+Full guide: **[docs/BUILD-APK.md](../docs/BUILD-APK.md)**

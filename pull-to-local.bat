@@ -106,7 +106,8 @@ echo.
 echo  Next steps:
 echo    1. Read docs\LOCAL-PC-SETUP.md
 echo    2. PC app     : run setup.bat, then use desktop "price maker.bat"
-echo    3. Android    : run setup-mobile.bat once, then start-mobile.bat
+echo    3. Android APK: run setup-mobile.bat once, then build-apk.bat
+echo       ^(dev only: start-mobile.bat + Expo Go^)
 echo    4. After edits: git add . ^&^& git commit -m "..." ^&^& git push
 echo.
 

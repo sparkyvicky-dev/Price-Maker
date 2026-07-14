@@ -98,7 +98,8 @@ if errorlevel 1 (
 echo.
 echo  SUCCESS!
 echo  PC app:     %TARGET_DIR%\price maker.bat
-echo  Android:    %TARGET_DIR%\start-mobile.bat
+echo  Android:    %TARGET_DIR%\start-mobile.bat  ^(Expo Go / dev^)
+echo  Build APK:  %TARGET_DIR%\build-apk.bat     ^(standalone — no Expo Go^)
 echo.
 
 set /p START_NOW="Start Expo now? (Y/N): "
