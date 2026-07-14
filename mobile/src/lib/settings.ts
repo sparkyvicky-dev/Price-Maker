@@ -50,6 +50,45 @@ export const DEFAULT_SETTINGS: AppSettings = {
 
 let cachedSettings: AppSettings | null = null;
 
+function mergeUniqueStrings(defaults: string[], extra?: unknown): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const item of [...defaults, ...(Array.isArray(extra) ? extra : [])]) {
+    const value = String(item || '').trim();
+    if (!value) continue;
+    const key = value.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(value);
+  }
+  return out;
+}
+
+export function footerKey(footer: FooterTemplate) {
+  return [footer.line1, footer.line2, footer.line3]
+    .map((v) => String(v || '').trim().toLowerCase())
+    .join('|');
+}
+
+function mergeFooterTemplates(defaults: FooterTemplate[], extra?: unknown): FooterTemplate[] {
+  const out: FooterTemplate[] = [];
+  const seen = new Set<string>();
+  const list = [...defaults, ...(Array.isArray(extra) ? (extra as FooterTemplate[]) : [])];
+  for (const item of list) {
+    if (!item || (!item.line1 && !item.line2 && !item.line3)) continue;
+    const template = {
+      line1: String(item.line1 || '').trim(),
+      line2: String(item.line2 || '').trim(),
+      line3: String(item.line3 || '').trim(),
+    };
+    const key = footerKey(template);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(template);
+  }
+  return out;
+}
+
 export function getTodayFormatted(settings: AppSettings = DEFAULT_SETTINGS) {
   return formatDate(new Date(), settings.dateFormat);
 }
@@ -73,9 +112,12 @@ export async function loadSettings(storage: {
       customSections: Array.isArray(parsed.customSections) ? parsed.customSections : [],
       brandOrder: Array.isArray(parsed.brandOrder) ? parsed.brandOrder : [],
       favoriteBrands: Array.isArray(parsed.favoriteBrands) ? parsed.favoriteBrands : [],
+      titleTemplates: mergeUniqueStrings(DEFAULT_TITLE_TEMPLATES, parsed.titleTemplates),
+      validityTemplates: mergeUniqueStrings(DEFAULT_VALIDITY_TEMPLATES, parsed.validityTemplates),
+      footerTemplates: mergeFooterTemplates(DEFAULT_FOOTER_TEMPLATES, parsed.footerTemplates),
     };
     cachedSettings = merged;
-    return merged;
+    return cachedSettings;
   } catch {
     cachedSettings = { ...DEFAULT_SETTINGS };
     return cachedSettings;
@@ -92,6 +134,9 @@ export async function saveSettings(
     ...patch,
     header: { ...current.header, ...patch.header },
     footer: { ...current.footer, ...patch.footer },
+    titleTemplates: patch.titleTemplates || current.titleTemplates,
+    validityTemplates: patch.validityTemplates || current.validityTemplates,
+    footerTemplates: patch.footerTemplates || current.footerTemplates,
   };
   await storage.setItem(SETTINGS_KEY, JSON.stringify(cachedSettings));
   return cachedSettings;
@@ -99,6 +144,31 @@ export async function saveSettings(
 
 export function invalidateSettingsCache() {
   cachedSettings = null;
+}
+
+export function addTitleTemplate(settings: AppSettings, title: string): AppSettings | null {
+  const trimmed = title.trim();
+  if (!trimmed) return null;
+  if (settings.titleTemplates.some((t) => t.toLowerCase() === trimmed.toLowerCase())) return null;
+  return { ...settings, titleTemplates: [...settings.titleTemplates, trimmed] };
+}
+
+export function addValidityTemplate(settings: AppSettings, validity: string): AppSettings | null {
+  const trimmed = validity.trim();
+  if (!trimmed) return null;
+  if (settings.validityTemplates.some((t) => t.toLowerCase() === trimmed.toLowerCase())) return null;
+  return { ...settings, validityTemplates: [...settings.validityTemplates, trimmed] };
+}
+
+export function addFooterTemplate(settings: AppSettings, footer: FooterTemplate): AppSettings | null {
+  const template = {
+    line1: footer.line1.trim(),
+    line2: footer.line2.trim(),
+    line3: footer.line3.trim(),
+  };
+  if (!template.line1 && !template.line2 && !template.line3) return null;
+  if (settings.footerTemplates.some((t) => footerKey(t) === footerKey(template))) return null;
+  return { ...settings, footerTemplates: [...settings.footerTemplates, template] };
 }
 
 export function toggleFavoriteBrand(settings: AppSettings, brand: string): AppSettings {

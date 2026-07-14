@@ -1,10 +1,10 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   FlatList,
   Modal,
   Pressable,
-  SafeAreaView,
   StyleSheet,
   Text,
   TextInput,
@@ -12,25 +12,30 @@ import {
 } from 'react-native';
 import * as Contacts from 'expo-contacts';
 import { Ionicons } from '@expo/vector-icons';
-import { ToastBanner } from '../../src/components/Feedback';
-import { ShareSheet } from '../../src/components/ShareSheet';
+import { Screen } from '../../src/components/Screen';
 import { useApp } from '../../src/context/AppProvider';
-import { openWhatsApp } from '../../src/lib/share';
-import { buildFullMessage } from '../../src/lib/preview';
-import { copyText } from '../../src/lib/share';
+import { normalizePhone } from '../../src/lib/share';
 import { colors, spacing } from '../../src/theme';
+
+function contactDisplayName(contact: Contacts.Contact): string {
+  if (contact.name?.trim()) return contact.name.trim();
+  const parts = [contact.firstName, contact.middleName, contact.lastName].filter(Boolean);
+  if (parts.length) return parts.join(' ');
+  return 'Unknown';
+}
+
+function phoneFromEntry(p: Contacts.PhoneNumber): string {
+  return (p.number || p.digits || '').trim();
+}
 
 export default function ContactsScreen() {
   const {
     settings,
     contacts,
-    products,
-    displayDate,
-    toast,
     addContact,
     removeContact,
     importContacts,
-    getSharePayload,
+    handleShareAction,
   } = useApp();
 
   const c = colors[settings.theme];
@@ -38,49 +43,100 @@ export default function ContactsScreen() {
   const [addOpen, setAddOpen] = useState(false);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [shareOpen, setShareOpen] = useState(false);
+  const [importing, setImporting] = useState(false);
 
-  const filtered = contacts.filter((x) => x.name.toLowerCase().includes(query.toLowerCase()) || x.phone.includes(query));
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const qDigits = query.replace(/\D/g, '');
+    if (!q) return contacts;
+    return contacts.filter((x) => {
+      const nameHit = x.name.toLowerCase().includes(q);
+      const phoneHit =
+        x.phone.toLowerCase().includes(q) ||
+        (qDigits.length > 0 && normalizePhone(x.phone).includes(qDigits));
+      return nameHit || phoneHit;
+    });
+  }, [contacts, query]);
 
   const importFromPhone = useCallback(async () => {
-    const { status } = await Contacts.requestPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission needed', 'Allow contacts access to import dealers.');
-      return;
-    }
-    const { data } = await Contacts.getContactsAsync({
-      fields: [Contacts.Fields.PhoneNumbers, Contacts.Fields.Name],
-    });
-    const items = data
-      .flatMap((contact) =>
-        (contact.phoneNumbers || []).map((p) => ({
-          name: contact.name || 'Unknown',
-          phone: p.number || '',
-        })),
-      )
-      .filter((x) => x.phone);
-    if (!items.length) {
-      Alert.alert('No contacts', 'No phone numbers found in your contacts.');
-      return;
-    }
-    await importContacts(items.slice(0, 200));
-  }, [importContacts]);
+    if (importing) return;
+    setImporting(true);
+    try {
+      const { status } = await Contacts.requestPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission needed', 'Allow contacts access.');
+        return;
+      }
 
-  const fullMessage = buildFullMessage(products, settings, displayDate);
+      const pageSize = 300;
+      let pageOffset = 0;
+      let hasNextPage = true;
+      const raw: Contacts.Contact[] = [];
+
+      while (hasNextPage && pageOffset < 5000) {
+        const page = await Contacts.getContactsAsync({
+          fields: [Contacts.Fields.PhoneNumbers, Contacts.Fields.Name],
+          pageSize,
+          pageOffset,
+          sort: Contacts.SortTypes.FirstName,
+        });
+        raw.push(...(page.data || []));
+        hasNextPage = !!page.hasNextPage;
+        pageOffset += pageSize;
+      }
+
+      const seen = new Set<string>();
+      const items: Array<{ name: string; phone: string }> = [];
+
+      for (const contact of raw) {
+        const displayName = contactDisplayName(contact);
+        for (const p of contact.phoneNumbers || []) {
+          const value = phoneFromEntry(p);
+          if (!value) continue;
+          const key = normalizePhone(value);
+          if (!key || seen.has(key)) continue;
+          seen.add(key);
+          items.push({ name: displayName, phone: value });
+        }
+      }
+
+      if (!items.length) {
+        Alert.alert('No phone numbers', 'No usable numbers found.');
+        return;
+      }
+
+      await importContacts(items.slice(0, 300));
+    } catch (e) {
+      Alert.alert('Import failed', e instanceof Error ? e.message : 'Could not read contacts.');
+    } finally {
+      setImporting(false);
+    }
+  }, [importContacts, importing]);
 
   return (
-    <SafeAreaView style={[styles.screen, { backgroundColor: c.bg }]}>
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: c.text }]}>Contacts</Text>
-        <Pressable style={[styles.btn, { backgroundColor: c.card }]} onPress={importFromPhone}>
-          <Ionicons name="download-outline" size={18} color={c.primary} />
-          <Text style={{ color: c.primary, fontWeight: '600' }}>Import</Text>
-        </Pressable>
-        <Pressable style={[styles.btn, { backgroundColor: c.primary }]} onPress={() => setAddOpen(true)}>
-          <Ionicons name="add" size={20} color="#fff" />
-        </Pressable>
-      </View>
-
+    <Screen
+      theme={settings.theme}
+      title="Contacts"
+      subtitle={`${contacts.length} dealers`}
+      right={
+        <View style={styles.headerActions}>
+          <Pressable
+            style={[styles.iconBtn, { backgroundColor: c.card, opacity: importing ? 0.6 : 1 }]}
+            onPress={importFromPhone}
+            disabled={importing}
+          >
+            {importing ? (
+              <ActivityIndicator size="small" color={c.primary} />
+            ) : (
+              <Ionicons name="download-outline" size={18} color={c.primary} />
+            )}
+          </Pressable>
+          <Pressable style={[styles.iconBtn, { backgroundColor: c.primary }]} onPress={() => setAddOpen(true)}>
+            <Ionicons name="add" size={20} color="#fff" />
+          </Pressable>
+        </View>
+      }
+    >
       <TextInput
         placeholder="Search contacts…"
         placeholderTextColor={c.textMuted}
@@ -92,8 +148,23 @@ export default function ContactsScreen() {
       <FlatList
         data={filtered}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: spacing.lg }}
-        ListEmptyComponent={<Text style={{ color: c.textMuted, textAlign: 'center' }}>Import or add dealer contacts.</Text>}
+        contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: 100 }}
+        ListEmptyComponent={
+          <View style={styles.empty}>
+            <Text style={{ color: c.textMuted, textAlign: 'center', marginBottom: spacing.md }}>
+              No dealers yet
+            </Text>
+            <Pressable
+              style={[styles.emptyBtn, { backgroundColor: c.primary, opacity: importing ? 0.6 : 1 }]}
+              onPress={importFromPhone}
+              disabled={importing}
+            >
+              <Text style={{ color: '#fff', fontWeight: '700' }}>
+                {importing ? 'Importing…' : 'Import from phone'}
+              </Text>
+            </Pressable>
+          </View>
+        }
         renderItem={({ item }) => (
           <View style={[styles.row, { backgroundColor: c.card, borderColor: c.cardBorder }]}>
             <View style={{ flex: 1 }}>
@@ -102,7 +173,7 @@ export default function ContactsScreen() {
             </View>
             <Pressable
               style={[styles.waBtn, { backgroundColor: '#25D366' }]}
-              onPress={() => openWhatsApp(item.phone, fullMessage)}
+              onPress={() => void handleShareAction({ type: 'full' }, 'whatsapp', item.phone)}
             >
               <Ionicons name="logo-whatsapp" size={22} color="#fff" />
             </Pressable>
@@ -113,32 +184,18 @@ export default function ContactsScreen() {
         )}
       />
 
-      <Pressable style={[styles.fab, { backgroundColor: c.primary }]} onPress={() => setShareOpen(true)}>
+      <Pressable
+        style={[styles.fab, { backgroundColor: c.primary }]}
+        onPress={() => void handleShareAction({ type: 'full' }, 'apps')}
+      >
         <Ionicons name="share-social-outline" size={22} color="#fff" />
         <Text style={{ color: '#fff', fontWeight: '700' }}>Share list</Text>
       </Pressable>
 
-      <ShareSheet
-        visible={shareOpen}
-        title="Full price list"
-        contacts={contacts}
-        theme={settings.theme}
-        onClose={() => setShareOpen(false)}
-        onCopy={async () => {
-          const payload = getSharePayload({ type: 'full' });
-          if (payload) await copyText(payload.text);
-          setShareOpen(false);
-        }}
-        onWhatsApp={async (contact) => {
-          await openWhatsApp(contact.phone, fullMessage);
-          setShareOpen(false);
-        }}
-      />
-
-      <Modal visible={addOpen} transparent animationType="slide" onRequestClose={() => setAddOpen(false)}>
+      <Modal visible={addOpen} transparent animationType="fade" onRequestClose={() => setAddOpen(false)}>
         <View style={styles.modalWrap}>
           <View style={[styles.modal, { backgroundColor: c.card }]}>
-            <Text style={[styles.title, { color: c.text }]}>Add contact</Text>
+            <Text style={[styles.modalTitle, { color: c.text }]}>Add contact</Text>
             <TextInput
               placeholder="Name"
               placeholderTextColor={c.textMuted}
@@ -173,18 +230,29 @@ export default function ContactsScreen() {
           </View>
         </View>
       </Modal>
-
-      {toast && <ToastBanner message={toast.message} type={toast.type || 'success'} theme={settings.theme} />}
-    </SafeAreaView>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: spacing.lg },
-  title: { flex: 1, fontSize: 24, fontWeight: '800' },
-  btn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10 },
-  search: { marginHorizontal: spacing.lg, marginBottom: spacing.sm, borderWidth: 1, borderRadius: 12, paddingHorizontal: spacing.md, paddingVertical: 10 },
+  headerActions: { flexDirection: 'row', gap: 8 },
+  iconBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  search: {
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.sm,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 10,
+  },
+  empty: { paddingVertical: spacing.xl, alignItems: 'center' },
+  emptyBtn: { paddingHorizontal: 16, paddingVertical: 12, borderRadius: 12 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -210,6 +278,7 @@ const styles = StyleSheet.create({
   },
   modalWrap: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', padding: spacing.lg },
   modal: { borderRadius: 16, padding: spacing.lg, gap: spacing.md },
+  modalTitle: { fontSize: 18, fontWeight: '800' },
   input: { borderWidth: 1, borderRadius: 10, paddingHorizontal: spacing.md, paddingVertical: 10 },
   modalActions: { flexDirection: 'row', justifyContent: 'space-between' },
 });

@@ -7,12 +7,18 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "scheme": "pricemaker",
+    "splash": {
+      "image": "./assets/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0f172a"
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.sparkymobiles.pricemaker"
     },
     "android": {
       "package": "com.sparkymobiles.pricemaker",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#0f172a",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -20,7 +26,9 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "permissions": [
-        "READ_CONTACTS"
+        "READ_CONTACTS",
+        "android.permission.READ_CONTACTS",
+        "android.permission.WRITE_CONTACTS"
       ]
     },
     "web": {
@@ -32,9 +40,15 @@
       [
         "expo-contacts",
         {
-          "contactsPermission": "Price Maker uses contacts so you can send price lists to dealers."
+          "contactsPermission": "Send price lists to dealers."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "10538eb6-2840-449b-81b6-993a12f19f07"
+      }
+    }
   }
 }

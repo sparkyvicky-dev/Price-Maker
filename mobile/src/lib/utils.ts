@@ -314,8 +314,22 @@ export function groupProductsForDisplay(
   return groups;
 }
 
+export function localDateKey(date = new Date()): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+/** Local calendar day (not UTC) — important for IST. */
 export function todayKey(): string {
-  return new Date().toISOString().split('T')[0];
+  return localDateKey();
+}
+
+export function yesterdayKey(): string {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return localDateKey(d);
 }
 
 export function parseRamStorage(value: unknown): { ram: string; storage: string } {
