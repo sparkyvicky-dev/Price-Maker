@@ -27,8 +27,8 @@ echo.
 if not exist "%MOBILE_DIR%\package.json" (
     echo  ERROR: mobile\ folder not found.
     echo  On a new PC run setup-apk-pc.bat instead.
-    echo  Or clone to Documents:
-    echo    git clone https://github.com/sparkyvicky-dev/price-maker.git "%%USERPROFILE%%\Documents\price-maker"
+    echo  Or pull to D:\New folder:
+    echo    git clone https://github.com/sparkyvicky-dev/price-maker.git "D:\New folder\price-maker"
     echo.
     pause
     exit /b 1

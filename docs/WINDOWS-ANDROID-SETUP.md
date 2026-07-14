@@ -1,128 +1,61 @@
 # Windows — Local PC setup
 
-> **Recommended path:** `D:\Github projects\price-maker`  
-> **Full guide:** [LOCAL-PC-SETUP.md](LOCAL-PC-SETUP.md) — clone, daily workflow, and push to GitHub.
+> **This PC path:** `D:\New folder\price-maker`  
+> **Full guide:** [LOCAL-PC-SETUP.md](LOCAL-PC-SETUP.md)  
+> **APK (no Expo Go):** [BUILD-APK.md](BUILD-APK.md)
 
-One folder for **both** PC and Android. You do **not** need two separate projects.
+One folder for **both** PC and Android.
 
-## Folder layout (what you should have)
+## Folder layout
 
 ```
-D:\Github projects\
+D:\New folder\
 └── price-maker\              ← ONE project (git repo)
-    ├── index.html            ← PC web app
-    ├── setup.bat             ← PC: desktop launcher
-    ├── price maker.bat       ← PC: start in browser
-    ├── setup-mobile.bat      ← Android: install dependencies (run once)
-    ├── start-mobile.bat      ← Android: start Expo for phone
-    ├── js\                   ← PC app code
+    ├── index.html
+    ├── pull-to-local.bat     ← pull/update from GitHub
+    ├── setup-apk-pc.bat      ← build installable APK
+    ├── build-apk.bat
+    ├── price maker.bat
+    ├── setup-mobile.bat
+    ├── start-mobile.bat
+    ├── js\
     ├── css\
-    └── mobile\               ← Android app (Expo)
-        ├── package.json
-        └── app\
+    └── mobile\
 ```
 
-| Part | Folder | How to run |
-|------|--------|------------|
-| **PC** | `price-maker\` (root) | `price maker.bat` or open `index.html` |
-| **Android** | `price-maker\mobile\` | `start-mobile.bat` → Expo Go on phone |
+| Part | How to run |
+|------|------------|
+| **Pull code** | `pull-to-local.bat` |
+| **APK** | `setup-apk-pc.bat` |
+| **PC web** | `price maker.bat` |
 
 ---
 
-## Step 1 — Check what is on your PC
-
-Open **Command Prompt** and run:
+## Pull to this PC
 
 ```bat
-dir "D:\Github projects"
-dir "D:\Github projects\price-maker"
-dir "D:\Github projects\price-maker\mobile"
-```
-
-**If you see `index.html`** → PC app is there.  
-**If you see `mobile\package.json`** → Android app is there too.  
-**If `mobile` is missing** → pull latest code (Step 2).
-
----
-
-## Step 2 — Get latest code (if mobile folder missing)
-
-```bat
-cd /d "D:\Github projects\price-maker"
-git pull
-```
-
-If you don't have git or the folder is old, clone fresh:
-
-```bat
-cd /d "D:\Github projects"
+mkdir "D:\New folder"
+cd /d "D:\New folder"
 git clone https://github.com/sparkyvicky-dev/price-maker.git price-maker
+cd price-maker
+git fetch origin
+git checkout cursor/alternative-apk-build-e99b
+```
+
+Or download **`pull-to-local.bat`** from GitHub and double-click it (creates `D:\New folder\price-maker`).
+
+---
+
+## Build APK (no Expo Go)
+
+```bat
+cd /d "D:\New folder\price-maker"
+setup-apk-pc.bat
 ```
 
 ---
 
-## Step 3 — Android setup (one time)
+## Node.js + Git required
 
-```bat
-cd /d "D:\Github projects\price-maker"
-setup-mobile.bat
-```
-
-Or double-click **setup-mobile.bat** in File Explorer.
-
----
-
-## Step 4 — Install APK on phone (recommended)
-
-**Do not rely on Expo Go for daily use.** Build a normal APK:
-
-```bat
-cd /d "D:\Github projects\price-maker"
-build-apk.bat
-```
-
-Choose **1 Cloud build**, log in to Expo, download the `.apk`, install on the phone.
-
-Full steps: **[BUILD-APK.md](BUILD-APK.md)**
-
-### Optional — live reload while coding (Expo Go)
-
-1. Install **Expo Go** on Android (Play Store)
-2. Run:
-
-```bat
-cd /d "D:\Github projects\price-maker"
-start-mobile.bat
-```
-
-3. Scan QR code with Expo Go (same Wi‑Fi as PC)
-
-If Expo Go fails or is slow, use **`build-apk.bat`** instead.
-
----
-
-## Common mistake
-
-```bat
-C:\Users\12vic> npm start    ← WRONG (no package.json here)
-```
-
-Always use:
-
-```bat
-D:\Github projects\price-maker\start-mobile.bat
-```
-
-Or:
-
-```bat
-cd /d "D:\Github projects\price-maker\mobile"
-npm install --legacy-peer-deps
-npx expo start
-```
-
----
-
-## Node.js required
-
-If you see `'node' is not recognized`, install Node.js LTS: https://nodejs.org/
+- Git: https://git-scm.com/download/win  
+- Node.js LTS: https://nodejs.org/  

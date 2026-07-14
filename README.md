@@ -18,7 +18,7 @@ A professional, offline-first web application for mobile shop owners to manage d
 
 ### Local PC (edit locally, push when ready)
 
-Clone or update to **`D:\Github projects\price-maker`**, work on your machine, then push to GitHub.
+Clone or update to **`D:\New folder\price-maker`**, work on your machine, then push to GitHub.
 
 1. Run **`pull-to-local.bat`** (or see manual steps in the guide)
 2. Read **[docs/LOCAL-PC-SETUP.md](docs/LOCAL-PC-SETUP.md)** for the full workflow
@@ -51,8 +51,8 @@ See **[docs/WINDOWS-ANDROID-SETUP.md](docs/WINDOWS-ANDROID-SETUP.md)** for Windo
 
 | Goal | What to run |
 |------|-------------|
-| **New PC / no D: drive + APK** | Copy–paste steps in **[docs/BUILD-APK.md](docs/BUILD-APK.md)** (uses `Documents\price-maker`) |
-| **Installable APK** (no Expo Go) | **`build-apk.bat cloud`** |
+| **Pull to this PC** | **`pull-to-local.bat`** → `D:\New folder\price-maker` |
+| **Installable APK** (no Expo Go) | **`setup-apk-pc.bat`** or **`build-apk.bat cloud`** — **[docs/BUILD-APK.md](docs/BUILD-APK.md)** |
 | Live reload while coding | **`setup-mobile.bat`** once, then **`start-mobile.bat`** → Expo Go (dev only) |
 
 Details: **[mobile/README.md](mobile/README.md)** · Plan: **[docs/ANDROID-APP.md](docs/ANDROID-APP.md)**

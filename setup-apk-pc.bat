@@ -1,33 +1,30 @@
 @echo off
-title Price Maker - Get APK (any PC)
+title Price Maker - Get APK (D:\New folder)
 setlocal EnableExtensions
 
 rem ============================================================
-rem  Works on ANY Windows PC — no D: drive needed.
-rem  Puts the project in Documents and builds a real APK.
+rem  Pulls to D:\New folder\price-maker and builds installable APK.
 rem  Does NOT use Expo Go.
 rem ============================================================
 
-set "TARGET_DIR=%USERPROFILE%\Documents\price-maker"
+set "PARENT_DIR=D:\New folder"
+set "TARGET_DIR=%PARENT_DIR%\price-maker"
 set "GIT_URL=https://github.com/sparkyvicky-dev/price-maker.git"
 set "BRANCH=cursor/alternative-apk-build-e99b"
 
 echo.
 echo  ================================================
 echo   Price Maker — Installable APK
-echo   NO Expo Go. Just install the .apk on your phone.
+echo   NO Expo Go
 echo  ================================================
 echo.
 echo  Folder on this PC:
 echo    %TARGET_DIR%
 echo.
-echo  Need once: Git + Node.js ^(scripts open download pages if missing^)
-echo.
 
 where git >nul 2>&1
 if errorlevel 1 (
     echo  Git is missing. Opening download page...
-    echo  Install Git, then double-click this file again.
     start https://git-scm.com/download/win
     pause
     exit /b 1
@@ -36,10 +33,21 @@ if errorlevel 1 (
 where node >nul 2>&1
 if errorlevel 1 (
     echo  Node.js is missing. Opening download page...
-    echo  Install "LTS", then double-click this file again.
+    echo  Install "LTS", then run this file again.
     start https://nodejs.org/
     pause
     exit /b 1
+)
+
+if not exist "%PARENT_DIR%" (
+    echo  Creating %PARENT_DIR% ...
+    mkdir "%PARENT_DIR%" 2>nul
+    if not exist "%PARENT_DIR%" (
+        echo  ERROR: Could not create %PARENT_DIR%
+        echo  Make sure drive D: exists.
+        pause
+        exit /b 1
+    )
 )
 
 if exist "%TARGET_DIR%\.git" (
@@ -62,8 +70,7 @@ if exist "%TARGET_DIR%\.git" (
         pause
         exit /b 1
     )
-    echo  Downloading project to Documents...
-    if not exist "%USERPROFILE%\Documents" mkdir "%USERPROFILE%\Documents" 2>nul
+    echo  Downloading project to D:\New folder ...
     git clone %GIT_URL% "%TARGET_DIR%"
     if errorlevel 1 (
         echo  Download failed. Check internet.
@@ -98,14 +105,11 @@ if errorlevel 1 (
 )
 
 echo.
-echo  Next: cloud builds the APK ^(about 10–20 min, one time^).
-echo  You get a download link. Install that .apk on your phone.
-echo  After that: open Price Maker like any app — no Expo Go ever.
+echo  Starting cloud APK build ^(no Expo Go on phone^)...
 echo.
 if exist "%TARGET_DIR%\build-apk.bat" (
     call "%TARGET_DIR%\build-apk.bat" cloud
 ) else (
-    echo  Starting cloud APK build...
     call npx --yes eas-cli@latest login
     call npx --yes eas-cli@latest build -p android --profile apk
     pause

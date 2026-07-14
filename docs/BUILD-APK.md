@@ -2,104 +2,74 @@
 
 You get a normal **`.apk`** file. Install it on the phone like any app.
 
-**Do not use Expo Go.** That app is only for developers scanning a QR code. Skip it.
+**Do not use Expo Go.**
+
+**This PC folder:** `D:\New folder\price-maker`
 
 ---
 
-## This PC has no `D:\Github projects` — use Documents
+## Pull + build on this PC
 
-Default folder on any Windows PC:
+### 1. Install once
 
-```
-C:\Users\<you>\Documents\price-maker
-```
+| Tool | Download |
+|------|----------|
+| Git | https://git-scm.com/download/win |
+| Node.js LTS | https://nodejs.org/ |
 
-### Step A — Install once
-
-1. **Git** → https://git-scm.com/download/win  
-2. **Node.js LTS** → https://nodejs.org/  
-
-Close Command Prompt and open a **new** one.
-
-### Step B — Copy–paste these lines
+### 2. Copy–paste in Command Prompt
 
 ```bat
-git clone https://github.com/sparkyvicky-dev/price-maker.git "%USERPROFILE%\Documents\price-maker"
-cd /d "%USERPROFILE%\Documents\price-maker"
+mkdir "D:\New folder"
+cd /d "D:\New folder"
+git clone https://github.com/sparkyvicky-dev/price-maker.git
+cd price-maker
 git fetch origin
 git checkout cursor/alternative-apk-build-e99b
+```
+
+### 3. Build APK
+
+```bat
+cd /d "D:\New folder\price-maker"
 setup-apk-pc.bat
 ```
 
-Or only:
+Or:
 
 ```bat
-cd /d "%USERPROFILE%\Documents\price-maker"
+cd /d "D:\New folder\price-maker"
 build-apk.bat cloud
 ```
 
-(if the folder is already cloned)
+### 4. Install on phone
 
-### Step C — After the build finishes
-
-1. Open the link shown in the terminal (or https://expo.dev → Builds)  
-2. Download the **`.apk`**  
-3. Send it to your phone (USB, Drive, WhatsApp to yourself)  
-4. Open the file → **Install**  
-5. Open **Price Maker** from the app drawer  
-
-Done. No Expo Go. No QR code. No same Wi‑Fi requirement.
+1. Open the build link (or https://expo.dev → Builds)  
+2. Download `.apk`  
+3. Open on phone → Install  
+4. Open **Price Maker** — no Expo Go  
 
 ---
 
-## Why a free “Expo account”?
+## Update code later
 
-That login is only for Expo’s **cloud build servers** (they compile the APK).
+```bat
+cd /d "D:\New folder\price-maker"
+git pull
+```
+
+Or double-click **`pull-to-local.bat`**.
+
+---
+
+## Why a free Expo account?
+
+Only to run the **cloud APK build** (not Expo Go).
 
 | Thing | Needed? |
 |-------|---------|
-| Expo Go (Play Store app) | **No** |
-| Expo website account | Yes, free, once |
-| Android Studio | No (cloud path) |
-| `D:\Github projects` | **No** — we use Documents |
+| Expo Go phone app | **No** |
+| Expo website login | Yes (free, once) |
+| Folder | **`D:\New folder\price-maker`** |
 
-First cloud build often takes **10–20 minutes**. After that you just use the installed app.
-
----
-
-## Commands (Documents path)
-
-```bat
-cd /d "%USERPROFILE%\Documents\price-maker\mobile"
-npm install --legacy-peer-deps
-npx eas-cli login
-npx eas-cli build -p android --profile apk
-```
-
----
-
-## Local build (optional)
-
-Only if you already have Android Studio:
-
-```bat
-cd /d "%USERPROFILE%\Documents\price-maker"
-build-apk.bat local
-```
-
-APK output:
-
-```
-mobile\android\app\build\outputs\apk\release\app-release.apk
-```
-
----
-
-## Troubleshooting
-
-| Problem | Fix |
-|---------|-----|
-| No D: drive | Use Documents path above — do not use `D:\Github projects` |
-| Git / Node missing | Install, then open a **new** Command Prompt |
-| Phone blocks install | Settings → Install unknown apps → allow Files/Chrome |
-| Waiting a long time | Normal for first cloud build; watch Builds on expo.dev |
+First cloud build ~10–20 minutes. After that just use the installed app.

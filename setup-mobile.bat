@@ -3,7 +3,7 @@ title Price Maker - Android (Expo) Setup
 setlocal EnableExtensions
 
 rem Default install path (change if you use a different folder)
-set "TARGET_DIR=D:\Github projects\price-maker"
+set "TARGET_DIR=D:\New folder\price-maker"
 set "GIT_URL=https://github.com/sparkyvicky-dev/price-maker.git"
 
 rem If run from inside the project, use that folder instead
@@ -22,7 +22,7 @@ if not exist "%TARGET_DIR%\index.html" (
     echo  Project not found. Downloading to:
     echo  %TARGET_DIR%
     echo.
-    if not exist "D:\Github projects" mkdir "D:\Github projects" 2>nul
+    if not exist "D:\New folder" mkdir "D:\New folder" 2>nul
     where git >nul 2>&1
     if errorlevel 1 (
         echo  ERROR: Git is not installed.
@@ -69,7 +69,7 @@ if not exist "%MOBILE_DIR%\package.json" (
         echo    git pull origin main
         echo.
         echo  Or clone fresh:
-        echo    cd /d "D:\Github projects"
+        echo    cd /d "D:\New folder"
         echo    rmdir /s /q price-maker
         echo    git clone %GIT_URL% price-maker
         echo.

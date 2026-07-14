@@ -1,4 +1,4 @@
-# Local PC Setup — `D:\Github projects`
+# Local PC Setup — `D:\New folder`
 
 Work on your Windows PC, edit files locally, and **push to GitHub when you are ready**. This guide explains how to get the project onto your machine, run it, and sync changes back.
 
@@ -10,7 +10,7 @@ Work on your Windows PC, edit files locally, and **push to GitHub when you are r
 |------|---------|
 | **Project** | Sparky Mobiles Price Manager |
 | **GitHub repo** | https://github.com/sparkyvicky-dev/price-maker |
-| **Local folder** | `D:\Github projects\price-maker` |
+| **Local folder** | `D:\New folder\price-maker` |
 | **PC app** | Web app in the project root (`index.html`) |
 | **Android app** | Expo app in `mobile\` subfolder |
 
@@ -40,7 +40,7 @@ node --version
 ## Folder layout (after pull)
 
 ```
-D:\Github projects\
+D:\New folder\
 └── price-maker\                 ← git repo (this project)
     ├── index.html               ← PC web app entry
     ├── setup.bat                ← PC: create desktop shortcut (run once)
@@ -67,7 +67,7 @@ D:\Github projects\
 1. Create the parent folder if it does not exist:
 
 ```bat
-mkdir "D:\Github projects"
+mkdir "D:\New folder"
 ```
 
 2. Download **only** `pull-to-local.bat` from GitHub, or clone once manually (Option B below).
@@ -75,21 +75,21 @@ mkdir "D:\Github projects"
 3. Double-click **`pull-to-local.bat`**, or run:
 
 ```bat
-cd /d "D:\Github projects"
+cd /d "D:\New folder"
 pull-to-local.bat
 ```
 
 The script will:
 
-- Create `D:\Github projects` if missing
+- Create `D:\New folder` if missing
 - **Clone** the repo if `price-maker` is not there yet
 - **Pull** latest `main` if the folder already exists
 
 ### Option B: Manual clone (first time)
 
 ```bat
-mkdir "D:\Github projects"
-cd /d "D:\Github projects"
+mkdir "D:\New folder"
+cd /d "D:\New folder"
 git clone https://github.com/sparkyvicky-dev/price-maker.git price-maker
 cd price-maker
 ```
@@ -97,7 +97,7 @@ cd price-maker
 ### Option C: Manual pull (folder already exists)
 
 ```bat
-cd /d "D:\Github projects\price-maker"
+cd /d "D:\New folder\price-maker"
 git pull origin main
 ```
 
@@ -112,7 +112,7 @@ Double-click `index.html`, or open it in Chrome / Edge.
 ### Recommended (local server + desktop shortcut)
 
 ```bat
-cd /d "D:\Github projects\price-maker"
+cd /d "D:\New folder\price-maker"
 setup.bat
 ```
 
@@ -125,7 +125,7 @@ Then double-click **`price maker.bat`** on your Desktop. It opens `http://localh
 One-time setup:
 
 ```bat
-cd /d "D:\Github projects\price-maker"
+cd /d "D:\New folder\price-maker"
 setup-mobile.bat
 ```
 
@@ -146,9 +146,9 @@ All work happens on your PC. Push only when you want changes on GitHub.
 ```
   ┌─────────────────┐     git pull      ┌──────────────────┐
   │  GitHub (main)  │ ◄──────────────── │  Your local PC   │
-  └─────────────────┘                   │  D:\Github       │
-          ▲                             │  projects\       │
-          │         git push            │  price-maker     │
+  └─────────────────┘                   │  D:\New folder\  │
+          ▲                             │  price-maker     │
+          │         git push            │                  │
           └─────────────────────────────└──────────────────┘
                     (when you are ready)
 ```
@@ -156,7 +156,7 @@ All work happens on your PC. Push only when you want changes on GitHub.
 ### 1. Start your session — get latest code
 
 ```bat
-cd /d "D:\Github projects\price-maker"
+cd /d "D:\New folder\price-maker"
 git pull origin main
 ```
 
@@ -180,7 +180,7 @@ Use Cursor, VS Code, or any editor. Main areas:
 ### 4. Save your work to GitHub
 
 ```bat
-cd /d "D:\Github projects\price-maker"
+cd /d "D:\New folder\price-maker"
 git status
 git add .
 git commit -m "Describe what you changed"
@@ -208,7 +208,7 @@ Run from the project folder:
 check-folders.bat
 ```
 
-You should see `[FOUND] D:\Github projects\price-maker` with web app, and mobile if you ran `setup-mobile.bat`.
+You should see `[FOUND] D:\New folder\price-maker` with web app, and mobile if you ran `setup-mobile.bat`.
 
 ---
 
@@ -225,14 +225,14 @@ Install Node.js LTS: https://nodejs.org/
 ### `mobile` folder missing
 
 ```bat
-cd /d "D:\Github projects\price-maker"
+cd /d "D:\New folder\price-maker"
 git pull origin main
 ```
 
 If still missing, clone fresh:
 
 ```bat
-cd /d "D:\Github projects"
+cd /d "D:\New folder"
 ren price-maker price-maker-old
 git clone https://github.com/sparkyvicky-dev/price-maker.git price-maker
 ```
@@ -246,7 +246,7 @@ C:\Users\You> npm start    ← WRONG (no package.json here)
 Always use:
 
 ```bat
-D:\Github projects\price-maker\start-mobile.bat
+D:\New folder\price-maker\start-mobile.bat
 ```
 
 ### Git push asks for login
