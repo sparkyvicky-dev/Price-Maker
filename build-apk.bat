@@ -1,20 +1,24 @@
 @echo off
-title Price Maker - Build Android APK (no Expo Go)
+title Price Maker - Build APK (NO Expo Go)
 setlocal EnableExtensions
 
 rem ============================================================
-rem  Build a standalone APK you install like a normal app.
-rem  No Expo Go required on the phone.
+rem  Standalone .apk for the phone. Not Expo Go.
+rem  Usage:
+rem    build-apk.bat          → asks cloud vs local
+rem    build-apk.bat cloud    → cloud APK only (default for new PC)
 rem ============================================================
 
 set "ROOT=%~dp0"
 set "ROOT=%ROOT:~0,-1%"
 set "MOBILE_DIR=%ROOT%\mobile"
+set "MODE=%~1"
 
 echo.
 echo  ========================================
 echo   Price Maker — Build APK
-echo   (standalone install — no Expo Go)
+echo   Result = .apk file on your phone
+echo   Expo Go = NOT used
 echo  ========================================
 echo.
 echo  Project: %ROOT%
@@ -22,8 +26,9 @@ echo.
 
 if not exist "%MOBILE_DIR%\package.json" (
     echo  ERROR: mobile\ folder not found.
-    echo  Run setup-mobile.bat first, or:
-    echo    git pull origin main
+    echo  On a new PC run setup-apk-pc.bat instead.
+    echo  Or clone to Documents:
+    echo    git clone https://github.com/sparkyvicky-dev/price-maker.git "%%USERPROFILE%%\Documents\price-maker"
     echo.
     pause
     exit /b 1
@@ -31,9 +36,9 @@ if not exist "%MOBILE_DIR%\package.json" (
 
 where node >nul 2>&1
 if errorlevel 1 (
-    echo  ERROR: Node.js is not installed.
+    echo  ERROR: Node.js not installed.
     echo  Download LTS: https://nodejs.org/
-    echo.
+    start https://nodejs.org/
     pause
     exit /b 1
 )
@@ -51,33 +56,36 @@ if not exist "node_modules\expo\package.json" (
     echo.
 )
 
-echo  Choose how to build the APK:
+if /I "%MODE%"=="cloud" goto CLOUD
+if /I "%MODE%"=="1" goto CLOUD
+if /I "%MODE%"=="local" goto LOCAL
+if /I "%MODE%"=="2" goto LOCAL
+
+echo  Build the installable APK ^(pick one^):
 echo.
-echo    1  Cloud build ^(EAS — recommended, no Android Studio^)
-echo    2  Local build ^(needs Android Studio + SDK on this PC^)
-echo    3  Open build guide
-echo    4  Cancel
+echo    1  Cloud APK  — recommended ^(no Android Studio^)
+echo    2  Local APK  — needs Android Studio on this PC
+echo    3  Cancel
 echo.
-set /p CHOICE="Enter 1, 2, 3 or 4: "
+echo  Note: Cloud build waits ~10–20 min once. Then phone installs
+echo  the .apk forever — you do NOT open Expo Go.
+echo.
+set /p CHOICE="Enter 1, 2 or 3: "
 
 if "%CHOICE%"=="1" goto CLOUD
 if "%CHOICE%"=="2" goto LOCAL
-if "%CHOICE%"=="3" goto GUIDE
-if "%CHOICE%"=="4" goto CANCEL
-echo  Invalid choice.
-pause
-exit /b 1
+goto CANCEL
 
 :CLOUD
 echo.
-echo  --- Cloud EAS build (APK) ---
-echo  1. You need a free Expo account: https://expo.dev/signup
-echo  2. When asked, log in in this window
-echo  3. Build usually takes 10–20 minutes in the cloud
-echo  4. When done, open the link and download the .apk
-echo  5. On phone: allow Install from unknown sources if asked
+echo  --- Cloud APK build ---
+echo  Free Expo website account is only to QUEUE the build.
+echo  That is NOT the Expo Go phone app.
 echo.
-echo  Starting login / build...
+echo  Steps after login:
+echo    - Wait for build link / open expo.dev Builds
+echo    - Download .apk
+echo    - Tap it on phone → Install
 echo.
 
 call npx --yes eas-cli@latest login
@@ -88,74 +96,51 @@ if errorlevel 1 (
 )
 
 echo.
-echo  Building Android APK profile "apk"...
+echo  Building Android APK now...
 echo.
 call npx --yes eas-cli@latest build -p android --profile apk --non-interactive
 if errorlevel 1 (
     echo.
-    echo  Non-interactive build failed — retrying with prompts...
+    echo  Retrying with prompts...
     echo.
     call npx --yes eas-cli@latest build -p android --profile apk
 )
 
 echo.
-echo  When the build finishes, Expo prints a download URL.
-echo  Or open: https://expo.dev/accounts/[you]/projects/price-maker/builds
+echo  DONE waiting? Use the URL in the log, or:
+echo  https://expo.dev  → your project → Builds → Download APK
 echo.
-echo  Install the APK on your phone — Expo Go is NOT needed.
+echo  Install on phone. Expo Go is not required.
 echo.
 pause
 exit /b 0
 
 :LOCAL
 echo.
-echo  --- Local APK build ---
-echo  Requires Android Studio with Android SDK + JDK 17.
-echo  Guide: docs\BUILD-APK.md
-echo.
-set /p CONFIRM="Continue with local prebuild + Gradle? (Y/N): "
+echo  --- Local APK ^(Android Studio required^) ---
+set /p CONFIRM="Continue? (Y/N): "
 if /I not "%CONFIRM%"=="Y" goto CANCEL
 
 echo.
-echo  Generating native Android project...
 call npx expo prebuild --platform android --clean
 if errorlevel 1 (
-    echo  expo prebuild failed.
+    echo  prebuild failed.
     pause
     exit /b 1
 )
 
-echo.
-echo  Building release APK with Gradle...
 cd /d "%MOBILE_DIR%\android"
 call gradlew.bat assembleRelease
 if errorlevel 1 (
-    echo.
-    echo  Gradle build failed.
-    echo  Install Android Studio, open mobile\android, then Build ^> Build APK.
-    echo  See docs\BUILD-APK.md
-    echo.
+    echo  Gradle failed. Open mobile\android in Android Studio.
     pause
     exit /b 1
 )
 
 echo.
-echo  SUCCESS — APK should be here:
+echo  APK file:
 echo  %MOBILE_DIR%\android\app\build\outputs\apk\release\app-release.apk
-echo.
-echo  Copy that file to your phone and open it to install.
-echo.
-pause
-exit /b 0
-
-:GUIDE
-echo.
-echo  Opening docs\BUILD-APK.md ...
-if exist "%ROOT%\docs\BUILD-APK.md" (
-    start "" "%ROOT%\docs\BUILD-APK.md"
-) else (
-    echo  File missing. Pull latest: git pull origin main
-)
+echo  Copy to phone and install.
 echo.
 pause
 exit /b 0

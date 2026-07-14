@@ -1,33 +1,33 @@
 @echo off
-title Price Maker - New PC: get code + build APK
+title Price Maker - Get APK (any PC)
 setlocal EnableExtensions
 
 rem ============================================================
-rem  For a DIFFERENT / NEW Windows PC with nothing installed yet.
-rem  Clones the project, gets APK build scripts, then builds.
+rem  Works on ANY Windows PC — no D: drive needed.
+rem  Puts the project in Documents and builds a real APK.
+rem  Does NOT use Expo Go.
 rem ============================================================
 
-set "PARENT_DIR=D:\Github projects"
-set "TARGET_DIR=%PARENT_DIR%\price-maker"
+set "TARGET_DIR=%USERPROFILE%\Documents\price-maker"
 set "GIT_URL=https://github.com/sparkyvicky-dev/price-maker.git"
-rem Prefer the APK feature branch; fall back to main if missing
 set "BRANCH=cursor/alternative-apk-build-e99b"
 
 echo.
-echo  ============================================================
-echo   Price Maker — New PC setup + APK build
-echo   Target: %TARGET_DIR%
-echo  ============================================================
+echo  ================================================
+echo   Price Maker — Installable APK
+echo   NO Expo Go. Just install the .apk on your phone.
+echo  ================================================
 echo.
-echo  You need once on this PC:
-echo    1. Git     https://git-scm.com/download/win
-echo    2. Node.js https://nodejs.org/  ^(LTS^)
-echo  Then come back and run this file again if needed.
+echo  Folder on this PC:
+echo    %TARGET_DIR%
+echo.
+echo  Need once: Git + Node.js ^(scripts open download pages if missing^)
 echo.
 
 where git >nul 2>&1
 if errorlevel 1 (
-    echo  ERROR: Git not found. Install it, open a NEW Command Prompt, retry.
+    echo  Git is missing. Opening download page...
+    echo  Install Git, then double-click this file again.
     start https://git-scm.com/download/win
     pause
     exit /b 1
@@ -35,61 +35,60 @@ if errorlevel 1 (
 
 where node >nul 2>&1
 if errorlevel 1 (
-    echo  ERROR: Node.js not found. Install LTS, open a NEW Command Prompt, retry.
+    echo  Node.js is missing. Opening download page...
+    echo  Install "LTS", then double-click this file again.
     start https://nodejs.org/
     pause
     exit /b 1
 )
 
-if not exist "%PARENT_DIR%" (
-    echo  Creating %PARENT_DIR% ...
-    mkdir "%PARENT_DIR%" 2>nul
-)
-
 if exist "%TARGET_DIR%\.git" (
-    echo  Project already there — updating...
+    echo  Updating project...
     cd /d "%TARGET_DIR%"
     git fetch origin
     git checkout %BRANCH% 2>nul
     if errorlevel 1 (
-        echo  Branch %BRANCH% not found — using main...
-        set "BRANCH=main"
+        echo  Using main branch...
         git checkout main
         git pull origin main
     ) else (
         git pull origin %BRANCH%
     )
 ) else (
-    echo  Cloning project...
+    if exist "%TARGET_DIR%" (
+        echo  ERROR: Folder exists but is not this project:
+        echo  %TARGET_DIR%
+        echo  Rename or delete it, then run again.
+        pause
+        exit /b 1
+    )
+    echo  Downloading project to Documents...
+    if not exist "%USERPROFILE%\Documents" mkdir "%USERPROFILE%\Documents" 2>nul
     git clone %GIT_URL% "%TARGET_DIR%"
     if errorlevel 1 (
-        echo  Clone failed. Check internet / GitHub access.
+        echo  Download failed. Check internet.
         pause
         exit /b 1
     )
     cd /d "%TARGET_DIR%"
     git fetch origin
     git checkout %BRANCH% 2>nul
-    if errorlevel 1 (
-        echo  Branch %BRANCH% not found — staying on main.
-        set "BRANCH=main"
-        git checkout main
-    )
+    if errorlevel 1 git checkout main
 )
 
 cd /d "%TARGET_DIR%"
 echo.
-echo  Branch: 
+echo  Ready at: %TARGET_DIR%
 git branch --show-current
 echo.
 
 if not exist "%TARGET_DIR%\mobile\package.json" (
-    echo  ERROR: mobile\ folder missing after clone.
+    echo  ERROR: mobile app folder missing.
     pause
     exit /b 1
 )
 
-echo  Installing Android deps once...
+echo  Installing app packages ^(first time only^)...
 cd /d "%TARGET_DIR%\mobile"
 call npm install --legacy-peer-deps
 if errorlevel 1 (
@@ -99,17 +98,16 @@ if errorlevel 1 (
 )
 
 echo.
+echo  Next: cloud builds the APK ^(about 10–20 min, one time^).
+echo  You get a download link. Install that .apk on your phone.
+echo  After that: open Price Maker like any app — no Expo Go ever.
+echo.
 if exist "%TARGET_DIR%\build-apk.bat" (
-    echo  Starting APK builder...
-    echo.
-    call "%TARGET_DIR%\build-apk.bat"
+    call "%TARGET_DIR%\build-apk.bat" cloud
 ) else (
-    echo  build-apk.bat not on this branch yet.
-    echo  Run manually:
-    echo    cd /d "%TARGET_DIR%\mobile"
-    echo    npx eas-cli login
-    echo    npx eas-cli build -p android --profile apk
-    echo.
+    echo  Starting cloud APK build...
+    call npx --yes eas-cli@latest login
+    call npx --yes eas-cli@latest build -p android --profile apk
     pause
 )
 

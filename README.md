@@ -51,9 +51,9 @@ See **[docs/WINDOWS-ANDROID-SETUP.md](docs/WINDOWS-ANDROID-SETUP.md)** for Windo
 
 | Goal | What to run |
 |------|-------------|
-| **New / different PC + APK** | **`setup-apk-pc.bat`** (or steps in **[docs/BUILD-APK.md](docs/BUILD-APK.md)**) |
-| **Installable APK** (recommended — no Expo Go) | **`build-apk.bat`** → see **[docs/BUILD-APK.md](docs/BUILD-APK.md)** |
-| Live reload while coding | **`setup-mobile.bat`** once, then **`start-mobile.bat`** → Expo Go |
+| **New PC / no D: drive + APK** | Copy–paste steps in **[docs/BUILD-APK.md](docs/BUILD-APK.md)** (uses `Documents\price-maker`) |
+| **Installable APK** (no Expo Go) | **`build-apk.bat cloud`** |
+| Live reload while coding | **`setup-mobile.bat`** once, then **`start-mobile.bat`** → Expo Go (dev only) |
 
 Details: **[mobile/README.md](mobile/README.md)** · Plan: **[docs/ANDROID-APP.md](docs/ANDROID-APP.md)**
 
