@@ -1,113 +1,63 @@
 # Windows — Local PC setup
 
-> **Recommended path:** `D:\Github projects\price-maker`  
-> **Full guide:** [LOCAL-PC-SETUP.md](LOCAL-PC-SETUP.md) — clone, daily workflow, and push to GitHub.
+> **This PC path:** `D:\New folder\price-maker`  
+> **APK guide:** [BUILD-APK.md](BUILD-APK.md) (Android Studio — no Expo Go)  
+> **Full workflow:** [LOCAL-PC-SETUP.md](LOCAL-PC-SETUP.md)
 
-One folder for **both** PC and Android. You do **not** need two separate projects.
+One folder for **both** PC web app and Android app.
 
-## Folder layout (what you should have)
+## Folder layout
 
 ```
-D:\Github projects\
-└── price-maker\              ← ONE project (git repo)
-    ├── index.html            ← PC web app
-    ├── setup.bat             ← PC: desktop launcher
-    ├── price maker.bat       ← PC: start in browser
-    ├── setup-mobile.bat      ← Android: install dependencies (run once)
-    ├── start-mobile.bat      ← Android: start Expo for phone
-    ├── js\                   ← PC app code
-    ├── css\
-    └── mobile\               ← Android app (Expo)
-        ├── package.json
-        └── app\
+D:\New folder\
+└── price-maker\
+    ├── index.html
+    ├── pull-to-local.bat
+    ├── setup-apk-pc.bat
+    ├── build-apk.bat
+    ├── price maker.bat
+    ├── setup-mobile.bat
+    ├── start-mobile.bat
+    ├── docs\
+    │   ├── BUILD-APK.md
+    │   └── README.md
+    └── mobile\
 ```
 
-| Part | Folder | How to run |
-|------|--------|------------|
-| **PC** | `price-maker\` (root) | `price maker.bat` or open `index.html` |
-| **Android** | `price-maker\mobile\` | `start-mobile.bat` → Expo Go on phone |
+| Goal | Run |
+|------|-----|
+| Pull / update | `pull-to-local.bat` |
+| Build APK | `build-apk.bat` or `setup-apk-pc.bat` |
+| PC web app | `price maker.bat` |
 
 ---
 
-## Step 1 — Check what is on your PC
-
-Open **Command Prompt** and run:
+## Pull to this PC
 
 ```bat
-dir "D:\Github projects"
-dir "D:\Github projects\price-maker"
-dir "D:\Github projects\price-maker\mobile"
-```
-
-**If you see `index.html`** → PC app is there.  
-**If you see `mobile\package.json`** → Android app is there too.  
-**If `mobile` is missing** → pull latest code (Step 2).
-
----
-
-## Step 2 — Get latest code (if mobile folder missing)
-
-```bat
-cd /d "D:\Github projects\price-maker"
-git pull
-```
-
-If you don't have git or the folder is old, clone fresh:
-
-```bat
-cd /d "D:\Github projects"
+mkdir "D:\New folder"
+cd /d "D:\New folder"
 git clone https://github.com/sparkyvicky-dev/price-maker.git price-maker
+cd price-maker
+git fetch origin
+git checkout cursor/alternative-apk-build-e99b
 ```
 
 ---
 
-## Step 3 — Android setup (one time)
+## Build APK (Android Studio)
 
 ```bat
-cd /d "D:\Github projects\price-maker"
-setup-mobile.bat
+cd /d "D:\New folder\price-maker"
+build-apk.bat
 ```
 
-Or double-click **setup-mobile.bat** in File Explorer.
+Needs **Android Studio** installed: https://developer.android.com/studio
 
 ---
 
-## Step 4 — Test on phone
+## Tools required
 
-1. Install **Expo Go** on Android (Play Store)
-2. Run:
-
-```bat
-cd /d "D:\Github projects\price-maker"
-start-mobile.bat
-```
-
-3. Scan QR code with Expo Go (same Wi‑Fi as PC)
-
----
-
-## Common mistake
-
-```bat
-C:\Users\12vic> npm start    ← WRONG (no package.json here)
-```
-
-Always use:
-
-```bat
-D:\Github projects\price-maker\start-mobile.bat
-```
-
-Or:
-
-```bat
-cd /d "D:\Github projects\price-maker\mobile"
-npm install --legacy-peer-deps
-npx expo start
-```
-
----
-
-## Node.js required
-
-If you see `'node' is not recognized`, install Node.js LTS: https://nodejs.org/
+- Git: https://git-scm.com/download/win  
+- Node.js LTS: https://nodejs.org/  
+- Android Studio (for APK): https://developer.android.com/studio  

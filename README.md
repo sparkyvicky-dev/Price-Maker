@@ -18,7 +18,7 @@ A professional, offline-first web application for mobile shop owners to manage d
 
 ### Local PC (edit locally, push when ready)
 
-Clone or update to **`D:\Github projects\price-maker`**, work on your machine, then push to GitHub.
+Clone or update to **`D:\New folder\price-maker`**, work on your machine, then push to GitHub.
 
 1. Run **`pull-to-local.bat`** (or see manual steps in the guide)
 2. Read **[docs/LOCAL-PC-SETUP.md](docs/LOCAL-PC-SETUP.md)** for the full workflow
@@ -46,11 +46,16 @@ Then visit `http://localhost:8080`
 See **[docs/VPS-DEPLOY.md](docs/VPS-DEPLOY.md)** for full Nginx + HTTPS deployment steps.
 
 ### Option 4: Android app
-See **[docs/WINDOWS-ANDROID-SETUP.md](docs/WINDOWS-ANDROID-SETUP.md)** for Windows setup (e.g. `F:\New folder\price-maker`).
 
-Quick: run **`setup-mobile.bat`** once, then **`start-mobile.bat`** → scan QR in Expo Go.
+See **[docs/WINDOWS-ANDROID-SETUP.md](docs/WINDOWS-ANDROID-SETUP.md)** for Windows setup.
 
-Details: **[mobile/README.md](mobile/README.md)** · Plan: **[docs/ANDROID-APP.md](docs/ANDROID-APP.md)**
+| Goal | What to run |
+|------|-------------|
+| **Pull to this PC** | **`pull-to-local.bat`** → `D:\New folder\price-maker` |
+| **Installable APK** (Android Studio, no Expo Go / no expo.dev) | **`setup-apk-pc.bat`** or **`build-apk.bat`** — **[docs/BUILD-APK.md](docs/BUILD-APK.md)** |
+| Live reload while coding | **`setup-mobile.bat`** once, then **`start-mobile.bat`** → Expo Go (dev only) |
+
+Details: **[mobile/README.md](mobile/README.md)** · Docs: **[docs/README.md](docs/README.md)** · Plan: **[docs/ANDROID-APP.md](docs/ANDROID-APP.md)**
 
 ## Project Structure
 

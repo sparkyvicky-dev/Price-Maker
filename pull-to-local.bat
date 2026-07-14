@@ -1,15 +1,15 @@
 @echo off
-title Price Maker - Pull to D:\Github projects
+title Price Maker - Pull to D:\New folder
 setlocal EnableExtensions
 
-set "PARENT_DIR=D:\Github projects"
+set "PARENT_DIR=D:\New folder"
 set "TARGET_DIR=%PARENT_DIR%\price-maker"
 set "GIT_URL=https://github.com/sparkyvicky-dev/price-maker.git"
-set "BRANCH=main"
+set "BRANCH=cursor/alternative-apk-build-e99b"
 
 echo.
 echo  ============================================================
-echo   Price Maker - Local PC setup
+echo   Price Maker - Pull to this PC
 echo   Target: %TARGET_DIR%
 echo   Repo  : %GIT_URL%
 echo  ============================================================
@@ -23,8 +23,6 @@ if errorlevel 1 (
     echo  2. Open a NEW Command Prompt
     echo  3. Run this file again
     echo.
-    echo  Full guide: docs\LOCAL-PC-SETUP.md
-    echo.
     pause
     exit /b 1
 )
@@ -34,24 +32,29 @@ if not exist "%PARENT_DIR%" (
     mkdir "%PARENT_DIR%" 2>nul
     if not exist "%PARENT_DIR%" (
         echo  ERROR: Could not create %PARENT_DIR%
-        echo  Check drive D: exists or change PARENT_DIR in this script.
+        echo  Check that drive D: exists.
         pause
         exit /b 1
     )
 )
 
 if exist "%TARGET_DIR%\.git" (
-    echo  Project found. Pulling latest from %BRANCH% ...
+    echo  Project found. Updating from GitHub ...
     echo.
     cd /d "%TARGET_DIR%"
-    git fetch origin %BRANCH%
-    git pull origin %BRANCH%
+    git fetch origin
+    git checkout %BRANCH% 2>nul
+    if errorlevel 1 (
+        echo  Branch %BRANCH% missing — using main...
+        set "BRANCH=main"
+        git checkout main
+        git pull origin main
+    ) else (
+        git pull origin %BRANCH%
+    )
     if errorlevel 1 (
         echo.
         echo  Pull failed. See messages above.
-        echo  If you have local changes, commit or stash them first:
-        echo    git stash
-        echo    git pull origin %BRANCH%
         echo.
         pause
         exit /b 1
@@ -64,9 +67,6 @@ if exist "%TARGET_DIR%" (
     echo  %TARGET_DIR%
     echo.
     echo  Move or rename that folder, then run this script again.
-    echo  Or clone manually:
-    echo    cd /d "%PARENT_DIR%"
-    echo    git clone %GIT_URL% price-maker
     echo.
     pause
     exit /b 1
@@ -82,6 +82,13 @@ if errorlevel 1 (
     pause
     exit /b 1
 )
+cd /d "%TARGET_DIR%"
+git fetch origin
+git checkout %BRANCH% 2>nul
+if errorlevel 1 (
+    echo  Staying on main.
+    git checkout main
+)
 
 :Success
 echo.
@@ -95,19 +102,17 @@ echo.
 if exist "%TARGET_DIR%\index.html" (
     echo  [OK] PC web app
 ) else (
-    echo  [--] PC web app missing - try git pull again
+    echo  [--] PC web app missing
 )
 if exist "%TARGET_DIR%\mobile\package.json" (
     echo  [OK] Android mobile app
 ) else (
-    echo  [--] Android app missing - run: git pull origin main
+    echo  [--] Android app missing
 )
 echo.
-echo  Next steps:
-echo    1. Read docs\LOCAL-PC-SETUP.md
-echo    2. PC app     : run setup.bat, then use desktop "price maker.bat"
-echo    3. Android    : run setup-mobile.bat once, then start-mobile.bat
-echo    4. After edits: git add . ^&^& git commit -m "..." ^&^& git push
+echo  Next:
+echo    APK ^(no Expo Go^):  build-apk.bat   or   setup-apk-pc.bat
+echo    PC web app:         price maker.bat
 echo.
 
 set /p OPEN_FOLDER="Open project folder in Explorer? (Y/N): "

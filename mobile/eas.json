@@ -4,10 +4,21 @@
     "appVersionSource": "local"
   },
   "build": {
-    "preview": {
+    "apk": {
       "distribution": "internal",
       "android": {
         "buildType": "apk"
+      }
+    },
+    "preview": {
+      "extends": "apk"
+    },
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleDebug"
       }
     },
     "production": {

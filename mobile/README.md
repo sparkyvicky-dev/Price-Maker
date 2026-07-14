@@ -4,28 +4,21 @@ Offline price list app for mobile dealers. Same Excel formats and WhatsApp messa
 
 ## Quick start (test on your phone)
 
-### Windows — `F:\New folder\price-maker`
+### Windows — `D:\New folder\price-maker`
 
 1. Install **Node.js** (LTS): https://nodejs.org  
 2. Install **Git**: https://git-scm.com/download/win  
-3. Install **Expo Go** on your Android phone (Play Store) — must be up to date  
-4. Double-click **`setup-mobile.bat`** in the project root  
-   - Installs/updates **`F:\New folder\price-maker`**  
-   - Downloads `mobile\` if missing (`git pull`)  
-   - Runs `npm install` inside `mobile\`  
-5. Double-click **`start-mobile.bat`** or press **Y** when setup asks  
+3. Double-click **`pull-to-local.bat`** (pulls to `D:\New folder\price-maker`)  
+4. For APK (no Expo Go): double-click **`setup-apk-pc.bat`**  
+5. For live reload only: **`setup-mobile.bat`** then **`start-mobile.bat`**
 
 ```bat
-cd /d "F:\New folder\price-maker\mobile"
+cd /d "D:\New folder\price-maker\mobile"
 npm start
 ```
 
-6. Scan the QR code with **Expo Go**
-
-> **Expo Go:** This app uses **Expo SDK 54** (works with Play Store Expo Go).  
-> On a new PC: `git pull` then run **`setup-mobile.bat`** once.
-
-**Not sure if files exist?** Run **`check-folders.bat`**
+> **Daily use:** build a standalone APK with **`setup-apk-pc.bat`** — see **[docs/BUILD-APK.md](../docs/BUILD-APK.md)**.  
+> Expo Go is optional for development only.
 
 ### Manual (any OS)
 
@@ -61,10 +54,26 @@ No separate Copy / Preview / Open WhatsApp buttons on every card — one **Share
 
 All data is stored locally in SQLite on the device. No account required.
 
-## Build APK (later)
+## Build APK (Android Studio — no Expo Go)
 
-```bash
-npx eas build -p android --profile preview
+For daily use, build a **standalone APK on this PC**.
+
+**Folder:** `D:\New folder\price-maker`
+
+```bat
+cd /d "D:\New folder\price-maker"
+build-apk.bat
 ```
 
-Requires Expo account and EAS CLI.
+Choose **1** (Gradle) or **2** (open in Android Studio).
+
+APK output:
+
+```
+mobile\android\app\build\outputs\apk\release\app-release.apk
+```
+
+Full guide: **[docs/BUILD-APK.md](../docs/BUILD-APK.md)**
+
+Needs: Node.js + [Android Studio](https://developer.android.com/studio).  
+Does **not** need Expo Go or expo.dev.
