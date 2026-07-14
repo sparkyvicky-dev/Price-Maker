@@ -52,7 +52,7 @@ See **[docs/WINDOWS-ANDROID-SETUP.md](docs/WINDOWS-ANDROID-SETUP.md)** for Windo
 | Goal | What to run |
 |------|-------------|
 | **Pull to this PC** | **`pull-to-local.bat`** → `D:\New folder\price-maker` |
-| **Installable APK** (no Expo Go) | **`setup-apk-pc.bat`** or **`build-apk.bat cloud`** — **[docs/BUILD-APK.md](docs/BUILD-APK.md)** |
+| **Installable APK** (Android Studio, no Expo Go / no expo.dev) | **`setup-apk-pc.bat`** or **`build-apk.bat`** — **[docs/BUILD-APK.md](docs/BUILD-APK.md)** |
 | Live reload while coding | **`setup-mobile.bat`** once, then **`start-mobile.bat`** → Expo Go (dev only) |
 
 Details: **[mobile/README.md](mobile/README.md)** · Plan: **[docs/ANDROID-APP.md](docs/ANDROID-APP.md)**

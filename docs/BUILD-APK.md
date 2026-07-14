@@ -1,23 +1,27 @@
-# Build Price Maker APK — NO Expo Go
+# Build Price Maker APK with Android Studio (local)
 
-You get a normal **`.apk`** file. Install it on the phone like any app.
+**No Expo Go. No expo.dev cloud.**  
+Build the `.apk` on this PC with Android Studio / Gradle.
 
-**Do not use Expo Go.**
-
-**This PC folder:** `D:\New folder\price-maker`
+**Folder:** `D:\New folder\price-maker`
 
 ---
 
-## Pull + build on this PC
+## What you need once
 
-### 1. Install once
+| Tool | Why |
+|------|-----|
+| [Git](https://git-scm.com/download/win) | Pull code |
+| [Node.js LTS](https://nodejs.org/) | Generate Android project |
+| [Android Studio](https://developer.android.com/studio) | SDK + build APK |
 
-| Tool | Download |
-|------|----------|
-| Git | https://git-scm.com/download/win |
-| Node.js LTS | https://nodejs.org/ |
+During Android Studio setup, install the **Android SDK** (default options are fine).
 
-### 2. Copy–paste in Command Prompt
+---
+
+## On the PC you are switching to
+
+### 1. Pull code (if not already done)
 
 ```bat
 mkdir "D:\New folder"
@@ -28,7 +32,14 @@ git fetch origin
 git checkout cursor/alternative-apk-build-e99b
 ```
 
-### 3. Build APK
+If the folder already exists:
+
+```bat
+cd /d "D:\New folder\price-maker"
+git pull origin cursor/alternative-apk-build-e99b
+```
+
+### 2. Build APK locally
 
 ```bat
 cd /d "D:\New folder\price-maker"
@@ -38,16 +49,40 @@ setup-apk-pc.bat
 Or:
 
 ```bat
-cd /d "D:\New folder\price-maker"
-build-apk.bat cloud
+build-apk.bat
 ```
+
+Choose **`1`** → generate Android project + Gradle build.
+
+### 3. Or open in Android Studio yourself
+
+```bat
+cd /d "D:\New folder\price-maker"
+build-apk.bat
+```
+
+Choose **`2`** (generate only), then in Android Studio:
+
+1. **File → Open** → `D:\New folder\price-maker\mobile\android`  
+2. Wait for Gradle sync / SDK download  
+3. **Build → Build Bundle(s) / APK(s) → Build APK(s)**  
 
 ### 4. Install on phone
 
-1. Open the build link (or https://expo.dev → Builds)  
-2. Download `.apk`  
-3. Open on phone → Install  
-4. Open **Price Maker** — no Expo Go  
+APK path:
+
+```
+D:\New folder\price-maker\mobile\android\app\build\outputs\apk\release\app-release.apk
+```
+
+Copy to phone → open → Install. Open **Price Maker** from the app list.
+
+---
+
+## Why not expo.dev?
+
+That site is only Expo’s optional cloud builders.  
+With Android Studio everything stays on your PC.
 
 ---
 
@@ -56,20 +91,7 @@ build-apk.bat cloud
 ```bat
 cd /d "D:\New folder\price-maker"
 git pull
+build-apk.bat
 ```
 
-Or double-click **`pull-to-local.bat`**.
-
----
-
-## Why a free Expo account?
-
-Only to run the **cloud APK build** (not Expo Go).
-
-| Thing | Needed? |
-|-------|---------|
-| Expo Go phone app | **No** |
-| Expo website login | Yes (free, once) |
-| Folder | **`D:\New folder\price-maker`** |
-
-First cloud build ~10–20 minutes. After that just use the installed app.
+Choose **1** again to rebuild the APK after changes.

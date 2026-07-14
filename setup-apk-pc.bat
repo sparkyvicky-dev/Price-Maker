@@ -1,10 +1,10 @@
 @echo off
-title Price Maker - Get APK (D:\New folder)
+title Price Maker - Setup local APK (Android Studio)
 setlocal EnableExtensions
 
 rem ============================================================
-rem  Pulls to D:\New folder\price-maker and builds installable APK.
-rem  Does NOT use Expo Go.
+rem  Pulls to D:\New folder\price-maker and prepares LOCAL APK.
+rem  Uses Android Studio / Gradle — not Expo Go, not expo.dev.
 rem ============================================================
 
 set "PARENT_DIR=D:\New folder"
@@ -14,17 +14,15 @@ set "BRANCH=cursor/alternative-apk-build-e99b"
 
 echo.
 echo  ================================================
-echo   Price Maker — Installable APK
-echo   NO Expo Go
+echo   Price Maker — Local APK setup
+echo   Path: D:\New folder\price-maker
+echo   Android Studio / Gradle  ·  No Expo Go
 echo  ================================================
-echo.
-echo  Folder on this PC:
-echo    %TARGET_DIR%
 echo.
 
 where git >nul 2>&1
 if errorlevel 1 (
-    echo  Git is missing. Opening download page...
+    echo  Install Git first: https://git-scm.com/download/win
     start https://git-scm.com/download/win
     pause
     exit /b 1
@@ -32,8 +30,7 @@ if errorlevel 1 (
 
 where node >nul 2>&1
 if errorlevel 1 (
-    echo  Node.js is missing. Opening download page...
-    echo  Install "LTS", then run this file again.
+    echo  Install Node.js LTS: https://nodejs.org/
     start https://nodejs.org/
     pause
     exit /b 1
@@ -43,8 +40,7 @@ if not exist "%PARENT_DIR%" (
     echo  Creating %PARENT_DIR% ...
     mkdir "%PARENT_DIR%" 2>nul
     if not exist "%PARENT_DIR%" (
-        echo  ERROR: Could not create %PARENT_DIR%
-        echo  Make sure drive D: exists.
+        echo  ERROR: Could not create %PARENT_DIR% — is D: available?
         pause
         exit /b 1
     )
@@ -56,7 +52,6 @@ if exist "%TARGET_DIR%\.git" (
     git fetch origin
     git checkout %BRANCH% 2>nul
     if errorlevel 1 (
-        echo  Using main branch...
         git checkout main
         git pull origin main
     ) else (
@@ -64,16 +59,14 @@ if exist "%TARGET_DIR%\.git" (
     )
 ) else (
     if exist "%TARGET_DIR%" (
-        echo  ERROR: Folder exists but is not this project:
-        echo  %TARGET_DIR%
-        echo  Rename or delete it, then run again.
+        echo  ERROR: %TARGET_DIR% exists but is not this git repo.
         pause
         exit /b 1
     )
-    echo  Downloading project to D:\New folder ...
+    echo  Cloning into D:\New folder\price-maker ...
     git clone %GIT_URL% "%TARGET_DIR%"
     if errorlevel 1 (
-        echo  Download failed. Check internet.
+        echo  Clone failed.
         pause
         exit /b 1
     )
@@ -85,17 +78,11 @@ if exist "%TARGET_DIR%\.git" (
 
 cd /d "%TARGET_DIR%"
 echo.
-echo  Ready at: %TARGET_DIR%
+echo  Ready: %TARGET_DIR%
 git branch --show-current
 echo.
 
-if not exist "%TARGET_DIR%\mobile\package.json" (
-    echo  ERROR: mobile app folder missing.
-    pause
-    exit /b 1
-)
-
-echo  Installing app packages ^(first time only^)...
+echo  Installing mobile packages...
 cd /d "%TARGET_DIR%\mobile"
 call npm install --legacy-peer-deps
 if errorlevel 1 (
@@ -105,14 +92,12 @@ if errorlevel 1 (
 )
 
 echo.
-echo  Starting cloud APK build ^(no Expo Go on phone^)...
+echo  Next you need Android Studio installed once:
+echo    https://developer.android.com/studio
+echo  Then this script will generate android\ and build the APK.
 echo.
-if exist "%TARGET_DIR%\build-apk.bat" (
-    call "%TARGET_DIR%\build-apk.bat" cloud
-) else (
-    call npx --yes eas-cli@latest login
-    call npx --yes eas-cli@latest build -p android --profile apk
-    pause
-)
+echo  Starting local APK builder...
+echo.
+call "%TARGET_DIR%\build-apk.bat"
 
 exit /b 0
