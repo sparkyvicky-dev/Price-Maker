@@ -51,6 +51,7 @@ See **[docs/WINDOWS-ANDROID-SETUP.md](docs/WINDOWS-ANDROID-SETUP.md)** for Windo
 
 | Goal | What to run |
 |------|-------------|
+| **New / different PC + APK** | **`setup-apk-pc.bat`** (or steps in **[docs/BUILD-APK.md](docs/BUILD-APK.md)**) |
 | **Installable APK** (recommended — no Expo Go) | **`build-apk.bat`** → see **[docs/BUILD-APK.md](docs/BUILD-APK.md)** |
 | Live reload while coding | **`setup-mobile.bat`** once, then **`start-mobile.bat`** → Expo Go |
 

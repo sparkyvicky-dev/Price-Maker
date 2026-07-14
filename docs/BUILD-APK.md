@@ -7,6 +7,45 @@ Use this when **Expo Go fails**, is **too slow**, or you want a normal installab
 
 ---
 
+## Different / new PC (start here)
+
+On a blank Windows PC you only need **Git** + **Node.js**, then clone and build.
+
+### 1. Install once
+
+| Tool | Download |
+|------|----------|
+| Git | https://git-scm.com/download/win |
+| Node.js LTS | https://nodejs.org/ |
+
+Close and reopen Command Prompt after installing.
+
+### 2. Clone + APK branch (one command block)
+
+```bat
+mkdir "D:\Github projects"
+cd /d "D:\Github projects"
+git clone https://github.com/sparkyvicky-dev/price-maker.git
+cd price-maker
+git fetch origin
+git checkout cursor/alternative-apk-build-e99b
+```
+
+Or, if you already have this repo’s scripts: double-click **`setup-apk-pc.bat`** (clones, installs deps, opens the APK builder).
+
+### 3. Build the APK
+
+```bat
+cd /d "D:\Github projects\price-maker"
+build-apk.bat
+```
+
+Choose **`1` Cloud build** → log in to Expo → download `.apk` → install on phone.
+
+**Expo account:** free signup at https://expo.dev/signup (any PC — login once).
+
+---
+
 ## Fastest path (recommended) — Cloud EAS
 
 Works on any Windows PC with Node.js. No Android Studio needed.
