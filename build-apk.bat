@@ -1,6 +1,6 @@
 @echo off
 title Price Maker - Build Android APK
-setlocal EnableExtensions
+setlocal EnableExtensions EnableDelayedExpansion
 
 set "ROOT=%~dp0"
 set "ROOT=%ROOT:~0,-1%"
@@ -42,8 +42,7 @@ if not defined JAVA_HOME (
     echo  Or download Temurin 17:
     echo    https://adoptium.net/temurin/releases/?version=17
     echo.
-    echo  Check current Java:
-    echo    java -version
+    echo  Then CLOSE this window, open a NEW Command Prompt, and run build-apk.bat again.
     echo.
     pause
     exit /b 1
@@ -92,7 +91,7 @@ if errorlevel 1 (
     echo.
     echo  Gradle build failed.
     echo  If you see "Unsupported class file major version 69":
-    echo    Install JDK 17 and set JAVA_HOME - Java 25 is too new.
+    echo    Run fix-java17.bat, close CMD, open new CMD, rebuild.
     echo  See docs\BUILD-APK-WINDOWS.md
     pause
     exit /b 1
@@ -123,39 +122,34 @@ pause
 exit /b 0
 
 :FindJava17
-rem Keep existing JAVA_HOME if it looks like 17 or 21
-if defined JAVA_HOME if exist "%JAVA_HOME%\bin\java.exe" (
-  "%JAVA_HOME%\bin\java.exe" -version 2>&1 | findstr /i "version \"17\|version \"21" >nul
-  if not errorlevel 1 exit /b 0
-)
+set "JAVA_HOME="
 
-rem Common JDK 17 / 21 install folders
+rem 1) Prefer known JDK 17 / 21 install folders
 for %%D in (
   "%ProgramFiles%\Eclipse Adoptium"
-  "%ProgramFiles%\Java"
   "%ProgramFiles%\Microsoft"
-  "%ProgramFiles%\Android\Android Studio\jbr"
+  "%ProgramFiles%\Java"
   "%LOCALAPPDATA%\Programs\Eclipse Adoptium"
 ) do (
-  if exist %%D (
-    for /d %%J in (%%D\jdk-17* %%D\jdk-21* %%D\jdk17* %%D\jdk21*) do (
-      if exist "%%J\bin\java.exe" (
-        set "JAVA_HOME=%%J"
-        exit /b 0
+  if exist "%%~D" (
+    for /d %%J in ("%%~D\jdk-17*" "%%~D\jdk-21*") do (
+      if exist "%%~J\bin\java.exe" (
+        set "JAVA_HOME=%%~J"
+        goto :eof
       )
     )
   )
 )
 
-rem Android Studio bundled JBR (often 17/21)
+rem 2) Android Studio bundled runtime (usually 17/21)
 if exist "%ProgramFiles%\Android\Android Studio\jbr\bin\java.exe" (
   set "JAVA_HOME=%ProgramFiles%\Android\Android Studio\jbr"
-  exit /b 0
+  goto :eof
 )
 if exist "%LOCALAPPDATA%\Programs\Android Studio\jbr\bin\java.exe" (
   set "JAVA_HOME=%LOCALAPPDATA%\Programs\Android Studio\jbr"
-  exit /b 0
+  goto :eof
 )
 
 set "JAVA_HOME="
-exit /b 0
+goto :eof
