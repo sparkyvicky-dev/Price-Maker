@@ -61,10 +61,14 @@ No separate Copy / Preview / Open WhatsApp buttons on every card — one **Share
 
 All data is stored locally in SQLite on the device. No account required.
 
-## Build APK (later)
+## Build real APK (no Expo Go)
 
-```bash
-npx eas build -p android --profile preview
+On Windows, from the repo root:
+
+```bat
+build-apk.bat
 ```
 
-Requires Expo account and EAS CLI.
+Full steps: **[../docs/BUILD-APK-WINDOWS.md](../docs/BUILD-APK-WINDOWS.md)**
+
+Needs: Node.js, JDK 17, Android Studio SDK.

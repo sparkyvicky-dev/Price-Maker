@@ -45,12 +45,20 @@ Then visit `http://localhost:8080`
 ### Option 3: VPS (phone + PC from anywhere)
 See **[docs/VPS-DEPLOY.md](docs/VPS-DEPLOY.md)** for full Nginx + HTTPS deployment steps.
 
-### Option 4: Android app
-See **[docs/WINDOWS-ANDROID-SETUP.md](docs/WINDOWS-ANDROID-SETUP.md)** for Windows setup (e.g. `F:\New folder\price-maker`).
+### Option 4: Android app (APK — no Expo Go)
+See **[docs/BUILD-APK-WINDOWS.md](docs/BUILD-APK-WINDOWS.md)**.
 
-Quick: run **`setup-mobile.bat`** once, then **`start-mobile.bat`** → scan QR in Expo Go.
+Quick on Windows after installing Android Studio + JDK 17:
 
-Details: **[mobile/README.md](mobile/README.md)** · Plan: **[docs/ANDROID-APP.md](docs/ANDROID-APP.md)**
+```bat
+cd /d "F:\New folder\Price-Maker"
+git pull origin main
+build-apk.bat
+```
+
+APK output: `mobile\android\app\build\outputs\apk\release\app-release.apk`
+
+(Optional Expo Go testing: **[docs/WINDOWS-ANDROID-SETUP.md](docs/WINDOWS-ANDROID-SETUP.md)**)
 
 ## Project Structure
 
