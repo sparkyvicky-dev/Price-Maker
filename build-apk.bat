@@ -30,22 +30,44 @@ if errorlevel 1 (
     exit /b 1
 )
 
-where java >nul 2>&1
-if errorlevel 1 (
-    echo  WARNING: Java not found in PATH.
-    echo  Install JDK 17 from https://adoptium.net/
+rem Prefer JDK 17 / 21 — Java 25 breaks Gradle for this project
+call :FindJava17
+if not defined JAVA_HOME (
     echo.
+    echo  ERROR: Need JDK 17 or 21. Your Java is too new or missing.
+    echo.
+    echo  Download Temurin 17:
+    echo    https://adoptium.net/temurin/releases/?version=17
+    echo  Choose: Windows x64  .msi  JDK
+    echo.
+    echo  Then set JAVA_HOME to the JDK folder, e.g.:
+    echo    C:\Program Files\Eclipse Adoptium\jdk-17.x.x.x-hotspot
+    echo.
+    echo  Check current Java:
+    echo    java -version
+    echo.
+    pause
+    exit /b 1
 )
 
+echo  Using JAVA_HOME=%JAVA_HOME%
+set "PATH=%JAVA_HOME%\bin;%PATH%"
+
+if "%ANDROID_HOME%"=="" if "%ANDROID_SDK_ROOT%"=="" (
+    if exist "%LOCALAPPDATA%\Android\Sdk" set "ANDROID_HOME=%LOCALAPPDATA%\Android\Sdk"
+)
 if "%ANDROID_HOME%"=="" if "%ANDROID_SDK_ROOT%"=="" (
     echo  WARNING: ANDROID_HOME is not set.
-    echo  Install Android Studio, then set ANDROID_HOME to your SDK folder.
-    echo  Example: set ANDROID_HOME=C:\Users\%USERNAME%\AppData\Local\Android\Sdk
+    echo  Example: set ANDROID_HOME=%LOCALAPPDATA%\Android\Sdk
     echo.
+) else (
+    if "%ANDROID_HOME%"=="" set "ANDROID_HOME=%ANDROID_SDK_ROOT%"
+    echo  Using ANDROID_HOME=%ANDROID_HOME%
 )
 
 cd /d "%MOBILE%"
 
+echo.
 echo  [1/4] Installing npm packages...
 call npm install --legacy-peer-deps
 if errorlevel 1 (
@@ -70,7 +92,8 @@ call gradlew.bat assembleRelease
 if errorlevel 1 (
     echo.
     echo  Gradle build failed.
-    echo  Make sure Android Studio + SDK + JDK 17 are installed.
+    echo  If you see "Unsupported class file major version 69":
+    echo    Install JDK 17 and set JAVA_HOME - Java 25 is too new.
     echo  See docs\BUILD-APK-WINDOWS.md
     pause
     exit /b 1
@@ -98,4 +121,42 @@ if exist "%APK%" (
 
 echo.
 pause
+exit /b 0
+
+:FindJava17
+rem Keep existing JAVA_HOME if it looks like 17 or 21
+if defined JAVA_HOME if exist "%JAVA_HOME%\bin\java.exe" (
+  "%JAVA_HOME%\bin\java.exe" -version 2>&1 | findstr /i "version \"17\|version \"21" >nul
+  if not errorlevel 1 exit /b 0
+)
+
+rem Common JDK 17 / 21 install folders
+for %%D in (
+  "%ProgramFiles%\Eclipse Adoptium"
+  "%ProgramFiles%\Java"
+  "%ProgramFiles%\Microsoft"
+  "%ProgramFiles%\Android\Android Studio\jbr"
+  "%LOCALAPPDATA%\Programs\Eclipse Adoptium"
+) do (
+  if exist %%D (
+    for /d %%J in (%%D\jdk-17* %%D\jdk-21* %%D\jdk17* %%D\jdk21*) do (
+      if exist "%%J\bin\java.exe" (
+        set "JAVA_HOME=%%J"
+        exit /b 0
+      )
+    )
+  )
+)
+
+rem Android Studio bundled JBR (often 17/21)
+if exist "%ProgramFiles%\Android\Android Studio\jbr\bin\java.exe" (
+  set "JAVA_HOME=%ProgramFiles%\Android\Android Studio\jbr"
+  exit /b 0
+)
+if exist "%LOCALAPPDATA%\Programs\Android Studio\jbr\bin\java.exe" (
+  set "JAVA_HOME=%LOCALAPPDATA%\Programs\Android Studio\jbr"
+  exit /b 0
+)
+
+set "JAVA_HOME="
 exit /b 0

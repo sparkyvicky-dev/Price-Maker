@@ -11,7 +11,7 @@ You get a normal `.apk` file to install on any Android phone.
 |------|----------|-------|
 | **Node.js LTS** | https://nodejs.org | Required |
 | **Git** | https://git-scm.com/download/win | Required |
-| **JDK 17** | https://adoptium.net/ | Choose **Temurin 17 (LTS)** |
+| **JDK 17** | https://adoptium.net/temurin/releases/?version=17 | **Must be 17 (or 21).** Java 22+ / 25 will fail Gradle |
 | **Android Studio** | https://developer.android.com/studio | Install SDK during setup |
 
 ### Android Studio setup
@@ -42,9 +42,19 @@ ANDROID_HOME = C:\Users\YOURNAME\AppData\Local\Android\Sdk
 %ANDROID_HOME%\emulator
 ```
 
-4. Also ensure Java is on Path (Temurin installer usually does this)
+4. Also set **JAVA_HOME** to your JDK 17 folder, e.g.:
+
+```
+JAVA_HOME = C:\Program Files\Eclipse Adoptium\jdk-17.0.14+7-hotspot
+```
 
 5. **Open a new Command Prompt** after changing env vars
+
+Check Java version (should say 17 or 21, **not 25**):
+
+```bat
+java -version
+```
 
 ---
 
@@ -154,6 +164,7 @@ Then reinstall the new APK on the phone.
 
 | Error | Fix |
 |-------|-----|
+| `Unsupported class file major version 69` | You are on **Java 25**. Install **JDK 17**, set `JAVA_HOME`, open new CMD, rebuild |
 | `ANDROID_HOME not set` | Set env var (see above), open **new** CMD |
 | `Java not found` / wrong Java | Install **JDK 17**, not only JRE |
 | `SDK location not found` | Open Android Studio once; install SDK Platforms |
