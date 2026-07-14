@@ -120,22 +120,25 @@ Then double-click **`price maker.bat`** on your Desktop. It opens `http://localh
 
 ---
 
-## Step 3 — Android app (optional)
+## Step 3 — Android APK (Android Studio)
 
-One-time setup:
+**Recommended for the phone** — no Expo Go:
 
 ```bat
 cd /d "D:\New folder\price-maker"
-setup-mobile.bat
+build-apk.bat
 ```
 
-Start on phone (Expo Go app required):
+Needs [Android Studio](https://developer.android.com/studio). Full steps: **[BUILD-APK.md](BUILD-APK.md)**.
+
+Optional live-reload while coding (Expo Go):
 
 ```bat
+setup-mobile.bat
 start-mobile.bat
 ```
 
-Scan the QR code on the same Wi‑Fi as your PC. See [WINDOWS-ANDROID-SETUP.md](WINDOWS-ANDROID-SETUP.md) for details.
+See [WINDOWS-ANDROID-SETUP.md](WINDOWS-ANDROID-SETUP.md).
 
 ---
 
