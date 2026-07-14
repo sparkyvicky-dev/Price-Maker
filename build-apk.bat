@@ -76,6 +76,7 @@ if errorlevel 1 (
 
 echo.
 echo  [2/4] Generating native Android project...
+set "CI=1"
 call npx expo prebuild --platform android --clean
 if errorlevel 1 (
     echo  prebuild failed.
