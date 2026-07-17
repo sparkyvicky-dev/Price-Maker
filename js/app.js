@@ -8,7 +8,7 @@ import {
 } from './utils.js';
 
 import {
-  openDB, getAllProducts, saveAllProducts, updateProduct, deleteProduct, saveSnapshot,
+  openDB, getAllProducts, saveAllProducts, updateProduct, deleteProduct, clearProducts, saveSnapshot,
   getHistoryCount, setMeta, getMeta, getYesterdaySnapshot, getSnapshotsByDate,
   getAllSnapshots, resetDatabase
 } from './db.js';
@@ -110,6 +110,7 @@ const app = {
     document.getElementById('btn-copy-selected')?.addEventListener('click', () => copySelected(products, selectedProducts));
     document.getElementById('btn-preview-selected')?.addEventListener('click', () => previewSelected(products, selectedProducts));
     document.getElementById('btn-duplicate-today')?.addEventListener('click', () => this.duplicateList());
+    document.getElementById('btn-clear-list')?.addEventListener('click', () => this.clearList());
 
     document.getElementById('search-input')?.addEventListener('input', debounce((e) => {
       searchQuery = e.target.value.trim().toLowerCase();
@@ -1589,6 +1590,24 @@ const app = {
     await saveAllProducts(products);
     await this.refreshDashboard();
     showToast('List duplicated', 'success');
+  },
+
+  async clearList() {
+    if (!products.length) {
+      showToast('Product list is already empty', 'info');
+      return;
+    }
+
+    if (!confirm('Clear the entire uploaded product list? Snapshots and history will be kept.')) return;
+
+    await clearProducts();
+    products = [];
+    selectedProducts.clear();
+    recentlyEdited = [];
+    undoStack = [];
+    try { sessionStorage.removeItem(UNDO_STORAGE_KEY); } catch { /* ignore */ }
+    await this.refreshDashboard();
+    showToast('Product list cleared', 'success');
   },
 
   async undoLastEdit() {
